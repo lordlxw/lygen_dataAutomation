@@ -1,0 +1,5 @@
+# 忽略 uploads 文件夹
+uploaded_files/
+
+# 忽略所有以 tmp 开头的文件夹
+tmp*/
