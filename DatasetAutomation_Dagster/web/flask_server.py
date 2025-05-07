@@ -53,21 +53,24 @@ def upload_pdf():
 
         # 使用 Dagster 实例
         logger.info("调用 Dagster 作业...")
+
         instance = DagsterInstance.ephemeral()  # 获取临时实例
 
         # 使用 reconstructable 来获取可重构的作业
-        reconstructable_job = reconstructable(render_pdf_job)  # 直接传递 render_pdf_job
-
+        logger.info(f"43425")
+        # 通过 reconstructable 获取作业实例
+        logger.info(render_pdf_job)
+        reconstructable_job = reconstructable(render_pdf_job)  # 使用模块路径
+        logger.info(f"523534")
+        logger.info(f"Job type: {reconstructable_job}")
         # 执行 Dagster 作业
         result = execute_job(
             job=reconstructable_job,
             instance=instance,
             run_config={
-                "ops": {
-                    "render_pdf_pages_with_boxes": {
-                        "config": {
-                            "file_path": str(file_path.resolve())  # 传入文件路径
-                        }
+                "resources": {
+                    "pdf_file_path": {
+                        "config": str(file_path.resolve())  # 传入文件路径
                     }
                 }
             }
@@ -93,6 +96,7 @@ def upload_pdf():
             "status": "error",
             "message": str(e)
         }), 500
+
 
 
 if __name__ == '__main__':
