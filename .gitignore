@@ -3,3 +3,13 @@ uploaded_files/
 
 # 忽略所有以 tmp 开头的文件夹
 tmp*/
+
+# 忽略 Python 编译文件
+__pycache__/
+*.pyc
+
+
+# 忽略 web 文件夹下的 __pycache__ 文件夹
+DatasetAutomation_Dagster/web/__pycache__/
+
+DatasetAutomation_Dagster/__pycache__/

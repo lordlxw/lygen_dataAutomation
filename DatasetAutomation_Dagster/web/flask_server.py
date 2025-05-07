@@ -5,8 +5,8 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import logging
 
-from dagster import DagsterInstance, build_reconstructable_job, execute_job,reconstructable
-from DatasetAutomation_Dagster.jobs import render_pdf_job  # 确保导入正确
+from dagster import DagsterInstance, in_process_executor, execute_job,reconstructable
+from DatasetAutomation_Dagster.jobs import process_pdf_job  # 确保导入正确
 
 # 设置 DAGSTER_HOME 环境变量
 os.environ["DAGSTER_HOME"] = str(Path.home() / "dagster_home")
@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 UPLOAD_PATH = Path("uploaded_files")
 UPLOAD_PATH.mkdir(exist_ok=True)
+
+# 创建一个全局的 Dagster 实例
+dagster_instance = DagsterInstance.get()  # 使用全局持久化实例
+
 
 
 @app.route('/upload', methods=['POST'])
@@ -51,53 +55,107 @@ def upload_pdf():
         with open("current_pdf_path.txt", "w") as f:
             f.write(str(file_path.resolve()))
 
-        # 使用 Dagster 实例
+        # 调用 Dagster 作业
         logger.info("调用 Dagster 作业...")
 
-        instance = DagsterInstance.ephemeral()  # 获取临时实例
+        reconstructable_job = reconstructable(process_pdf_job)
 
-        # 使用 reconstructable 来获取可重构的作业
-        logger.info(f"43425")
-        # 通过 reconstructable 获取作业实例
-        logger.info(render_pdf_job)
-        reconstructable_job = reconstructable(render_pdf_job)  # 使用模块路径
-        logger.info(f"523534")
-        logger.info(f"Job type: {reconstructable_job}")
-        # 执行 Dagster 作业
         result = execute_job(
             job=reconstructable_job,
-            instance=instance,
             run_config={
-                "resources": {
-                    "pdf_file_path": {
-                        "config": str(file_path.resolve())  # 传入文件路径
+                "ops": {
+                    "process_pdf_file": {
+                        "inputs": {
+                            "pdf_path": str(file_path)
+                        }
+                    }
+                },
+                "execution": {
+                    "config": {
+                        "in_process": {}  # ⬅️ 注意这里必须嵌套在 config 里面
                     }
                 }
-            }
+            },
+            instance=dagster_instance
         )
+        print("result!!!")
+        logger.info(vars(result))  # 这里会打印出 result 对象的详细内容
+        print("99999")
+        print(vars(result))  # 这里会打印出 result 对象的详细内容
+        if result.success:
+            return jsonify({
+                "status": "Dagster job succeeded",
+                "runId": result.run_id  # 返回 runId
+            }), 200
+        else:
+            # 获取失败事件
+            errors = []
+            for event in result.all_events:
+                if event.event_type_value == "STEP_FAILURE":
+                    errors.append(event.message)
 
-        if not result.success:
-            errors = [event.message for event in result.event_list if event.is_failure]
-            logger.error(f"Dagster 执行失败：{errors}")
             return jsonify({
                 "status": "Dagster job failed",
+                "runId":None,
                 "errors": errors
             }), 500
 
-        logger.info("Dagster job 执行成功")
+    except Exception as e:
+        logger.exception("上传处理过程中发生异常")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+
+
+
+
+@app.route('/query_status', methods=['GET'])
+def query_status():
+    try:
+        logger.error("query_status")
+        # 从请求中获取 runId
+        run_id = request.args.get('runId')
+        logger.info("run_id")
+        logger.info(run_id)
+        if not run_id:
+            logger.error("runId is required")
+            return jsonify({"status": "error", "message": "runId is required"}), 400
+        
+        # 获取 Dagster 实例
+
+        # 查询任务状态
+        
+        run = dagster_instance.get_run_by_id(run_id)
+        logger.info("runaaaaa")
+        logger.info(run)
+        if not run:
+            logger.error(f"Run with id {run_id} not found")
+            return jsonify({"status": "error", "message": "Run not found"}), 404
+
+        # 获取任务的执行状态
+        run_status = run.status  # 例如: "SUCCESS", "FAILURE", "RUNNING" 等
+        events = run.all_events  # 获取所有相关事件
+
+        # 构建返回的结果
+        events_info = []
+        for event in events:
+            events_info.append({
+                "timestamp": event.timestamp,
+                "event_type": event.event_type_value,
+                "message": event.message
+            })
+
         return jsonify({
             "status": "success",
-            "file": filename
-        })
+            "runId": run_id,
+            "runStatus": run_status,
+            "events": events_info
+        }), 200
 
     except Exception as e:
-        logger.exception("发生异常")
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
-
-
+        logger.exception("查询任务执行状态时发生异常")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=6666)
