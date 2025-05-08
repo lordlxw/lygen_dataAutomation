@@ -26,7 +26,8 @@ UPLOAD_PATH.mkdir(exist_ok=True)
 # 创建一个全局的 Dagster 实例
 dagster_instance = DagsterInstance.get()  # 使用全局持久化实例
 
-
+# 最大文件大小限制（单位：字节）
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 
 @app.route('/upload', methods=['POST'])
 def upload_pdf():
@@ -40,31 +41,26 @@ def upload_pdf():
             logger.error("No selected file")
             return "No selected file", 400
 
-        # 获取上传文件的原始文件名
         original_filename = file.filename.rsplit('.', 1)[0]
         logger.info(f"上传了文件：{original_filename}")
 
-        # 保存上传文件
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         filename = f"{original_filename}_{timestamp}.pdf"
         file_path = UPLOAD_PATH / filename
         file.save(file_path)
         logger.info(f"文件保存到路径：{file_path}")
 
-        # 写入路径文件
         with open("current_pdf_path.txt", "w") as f:
             f.write(str(file_path.resolve()))
 
-        # 调用 Dagster 作业
         logger.info("调用 Dagster 作业...")
-
         reconstructable_job = reconstructable(process_pdf_job)
 
         result = execute_job(
             job=reconstructable_job,
             run_config={
                 "ops": {
-                    "process_pdf_file": {
+                    "check_pdf_size": {
                         "inputs": {
                             "pdf_path": str(file_path)
                         }
@@ -72,37 +68,36 @@ def upload_pdf():
                 },
                 "execution": {
                     "config": {
-                        "in_process": {}  # ⬅️ 注意这里必须嵌套在 config 里面
+                        "in_process": {}
                     }
                 }
             },
             instance=dagster_instance
         )
-        print("result!!!")
-        logger.info(vars(result))  # 这里会打印出 result 对象的详细内容
-        print("99999")
-        print(vars(result))  # 这里会打印出 result 对象的详细内容
+
+        logger.info(vars(result))
+
         if result.success:
             return jsonify({
                 "status": "Dagster job succeeded",
-                "runId": result.run_id  # 返回 runId
+                "runId": result.run_id
             }), 200
         else:
-            # 获取失败事件
-            errors = []
-            for event in result.all_events:
-                if event.event_type_value == "STEP_FAILURE":
-                    errors.append(event.message)
-
+            errors = [
+                event.message
+                for event in result.all_events
+                if event.event_type_value == "STEP_FAILURE"
+            ]
             return jsonify({
                 "status": "Dagster job failed",
-                "runId":None,
+                "runId": None,
                 "errors": errors
             }), 500
 
     except Exception as e:
         logger.exception("上传处理过程中发生异常")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 
 
