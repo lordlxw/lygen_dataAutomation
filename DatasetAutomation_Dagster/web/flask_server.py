@@ -113,49 +113,47 @@ def upload_pdf():
 @app.route('/query_status', methods=['GET'])
 def query_status():
     try:
-        logger.error("query_status")
-        # 从请求中获取 runId
-        run_id = request.args.get('runId')
-        logger.info("run_id")
-        logger.info(run_id)
-        if not run_id:
-            logger.error("runId is required")
-            return jsonify({"status": "error", "message": "runId is required"}), 400
-        
-        # 获取 Dagster 实例
+        logger.info("query_status called")
 
-        # 查询任务状态
-        
+        run_id = request.args.get('runId')
+        if not run_id:
+            logger.warning("runId is required but missing")
+            return jsonify({"status": "error", "message": "runId is required"}), 400
+
+        # 获取 DagsterRun 对象
         run = dagster_instance.get_run_by_id(run_id)
-        logger.info("runaaaaa")
-        logger.info(run)
+        print("runnnn")
+        print(run)
         if not run:
             logger.error(f"Run with id {run_id} not found")
             return jsonify({"status": "error", "message": "Run not found"}), 404
 
-        # 获取任务的执行状态
-        run_status = run.status  # 例如: "SUCCESS", "FAILURE", "RUNNING" 等
-        events = run.all_events  # 获取所有相关事件
+        # 提取关键字段
+        run_info = {
+            "runId": run.run_id,
+            "jobName": run.job_name,
+            "runStatus": run.status.value,  # e.g. 'SUCCESS', 'FAILURE'
+            "runConfig": run.run_config,  # 配置中包含了你传入的 pdf_path 等
+        }
 
-        # 构建返回的结果
-        events_info = []
-        for event in events:
-            events_info.append({
-                "timestamp": event.timestamp,
-                "event_type": event.event_type_value,
-                "message": event.message
+        # 提取执行路径、模块等运行元数据
+        origin = run.job_code_origin
+        if origin:
+            run_info.update({
+                "repositoryOrigin": str(origin.repository_origin) if origin.repository_origin else "N/A",
+                "executablePath": origin.executable_path if origin.executable_path else "N/A"
             })
 
         return jsonify({
             "status": "success",
-            "runId": run_id,
-            "runStatus": run_status,
-            "events": events_info
+            "data": run_info
         }), 200
 
     except Exception as e:
-        logger.exception("查询任务执行状态时发生异常")
+        logger.exception("Error occurred while querying Dagster run status")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=6666)

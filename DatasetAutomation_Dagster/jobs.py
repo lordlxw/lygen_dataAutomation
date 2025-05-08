@@ -6,7 +6,6 @@ import os
 def process_pdf_file(context, pdf_path: str):
     try:
         context.log.info(f"开始处理 PDF 文件: {pdf_path}")
-        
         # 将 PDF 转换为图像
         images = convert_from_path(pdf_path, 300)
         

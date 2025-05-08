@@ -1,12 +1,16 @@
 # 忽略 uploads 文件夹
 uploaded_files/
 
+output/
+
 # 忽略所有以 tmp 开头的文件夹
 tmp*/
 
 # 忽略 Python 编译文件
-__pycache__/
 *.pyc
+*.pyo
+*.pyd
+__pycache__/
 
 
 # 忽略 web 文件夹下的 __pycache__ 文件夹
