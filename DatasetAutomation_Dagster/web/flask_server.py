@@ -41,9 +41,11 @@ def upload_pdf():
             logger.error("No selected file")
             return "No selected file", 400
 
-        original_filename = file.filename.rsplit('.', 1)[0]
-        logger.info(f"上传了文件：{original_filename}")
+        route = request.form.get("route", "to_pngs")
+        if route not in ["to_pngs", "to_pdf"]:
+            return jsonify({"status": "error", "message": "无效的 route 参数（应为 'to_pngs' 或 'to_pdf'）"}), 400
 
+        original_filename = file.filename.rsplit('.', 1)[0]
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         filename = f"{original_filename}_{timestamp}.pdf"
         file_path = UPLOAD_PATH / filename
@@ -54,7 +56,14 @@ def upload_pdf():
             f.write(str(file_path.resolve()))
 
         logger.info("调用 Dagster 作业...")
+
         reconstructable_job = reconstructable(process_pdf_job)
+
+        # 根据 route 选择要执行哪些 op
+        if route == "to_pngs":
+            op_selection = ["check_pdf_size", "process_pdf_file_to_pngs"]
+        else:
+            op_selection = ["check_pdf_size", "process_pdf_file_to_pdf"]
 
         result = execute_job(
             job=reconstructable_job,
@@ -72,10 +81,12 @@ def upload_pdf():
                     }
                 }
             },
+            op_selection=op_selection,
             instance=dagster_instance
         )
 
-        logger.info(vars(result))
+        for event in result.all_events:
+            logger.info(f"{event.event_type_value}: {event.message}")
 
         if result.success:
             return jsonify({
@@ -84,7 +95,7 @@ def upload_pdf():
             }), 200
         else:
             errors = [
-                event.message
+                f"[{event.step_key}] {event.message}"
                 for event in result.all_events
                 if event.event_type_value == "STEP_FAILURE"
             ]
@@ -97,6 +108,7 @@ def upload_pdf():
     except Exception as e:
         logger.exception("上传处理过程中发生异常")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 
 
@@ -128,7 +140,8 @@ def query_status():
             "runId": run.run_id,
             "jobName": run.job_name,
             "runStatus": run.status.value,  # e.g. 'SUCCESS', 'FAILURE'
-            "runConfig": run.run_config,  # 配置中包含了你传入的 pdf_path 等
+            "stepKeysToExecute": run.step_keys_to_execute,
+            "runConfig": run.run_config,
         }
 
         # 提取执行路径、模块等运行元数据
@@ -147,6 +160,7 @@ def query_status():
     except Exception as e:
         logger.exception("Error occurred while querying Dagster run status")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 
 
