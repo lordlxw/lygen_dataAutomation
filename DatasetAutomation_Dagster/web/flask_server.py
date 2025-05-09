@@ -34,16 +34,28 @@ def upload_pdf():
     try:
         if 'file' not in request.files:
             logger.error("No file part in the request")
-            return "No file part", 400
+            return jsonify({
+                "message": "No file part in the request",
+                "code": "00001",
+                "value": None
+            }), 400
 
         file = request.files['file']
         if file.filename == '':
             logger.error("No selected file")
-            return "No selected file", 400
+            return jsonify({
+                "message": "No selected file",
+                "code": "00002",
+                "value": None
+            }), 400
 
         route = request.form.get("route", "to_pngs")
         if route not in ["to_pngs", "to_pdf"]:
-            return jsonify({"status": "error", "message": "无效的 route 参数（应为 'to_pngs' 或 'to_pdf'）"}), 400
+            return jsonify({
+                "message": "无效的 route 参数（应为 'to_pngs' 或 'to_pdf'）",
+                "code": "00003",
+                "value": None
+            }), 400
 
         original_filename = file.filename.rsplit('.', 1)[0]
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -90,8 +102,11 @@ def upload_pdf():
 
         if result.success:
             return jsonify({
-                "status": "Dagster job succeeded",
-                "runId": result.run_id
+                "message": "Dagster job succeeded",
+                "code": "00000",
+                "value": {
+                    "runId": result.run_id
+                }
             }), 200
         else:
             errors = [
@@ -100,14 +115,22 @@ def upload_pdf():
                 if event.event_type_value == "STEP_FAILURE"
             ]
             return jsonify({
-                "status": "Dagster job failed",
-                "runId": None,
-                "errors": errors
+                "message": "Dagster job failed",
+                "code": "00004",
+                "value": {
+                    "runId": None,
+                    "errors": errors
+                }
             }), 500
 
     except Exception as e:
         logger.exception("上传处理过程中发生异常")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({
+            "message": str(e),
+            "code": "00005",
+            "value": None
+        }), 500
+
 
 
 
@@ -125,21 +148,27 @@ def query_status():
         run_id = request.args.get('runId')
         if not run_id:
             logger.warning("runId is required but missing")
-            return jsonify({"status": "error", "message": "runId is required"}), 400
+            return jsonify({
+                "message": "runId 参数缺失",
+                "code": "00006",
+                "value": None
+            }), 400
 
         # 获取 DagsterRun 对象
         run = dagster_instance.get_run_by_id(run_id)
-        print("runnnn")
-        print(run)
         if not run:
             logger.error(f"Run with id {run_id} not found")
-            return jsonify({"status": "error", "message": "Run not found"}), 404
+            return jsonify({
+                "message": f"未找到 ID 为 {run_id} 的运行任务",
+                "code": "00007",
+                "value": None
+            }), 404
 
         # 提取关键字段
         run_info = {
             "runId": run.run_id,
             "jobName": run.job_name,
-            "runStatus": run.status.value,  # e.g. 'SUCCESS', 'FAILURE'
+            "runStatus": run.status.value,  # 如 'SUCCESS', 'FAILURE'
             "stepKeysToExecute": run.step_keys_to_execute,
             "runConfig": run.run_config,
         }
@@ -153,13 +182,19 @@ def query_status():
             })
 
         return jsonify({
-            "status": "success",
-            "data": run_info
+            "message": "运行状态查询成功",
+            "code": "00000",
+            "value": run_info
         }), 200
 
     except Exception as e:
-        logger.exception("Error occurred while querying Dagster run status")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        logger.exception("查询 Dagster 运行状态时发生异常")
+        return jsonify({
+            "message": str(e),
+            "code": "00008",
+            "value": None
+        }), 500
+
 
 
 
