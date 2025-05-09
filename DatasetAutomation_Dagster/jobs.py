@@ -31,8 +31,62 @@ def process_pdf_file_to_pdf(context, pdf_path: str):
         dst.write(src.read())  # 简单复制，实际可以加水印等
     context.log.info(f"PDF 已复制到：{new_path}")
 
+
+from dagster import op, In
+import os
+
+from magic_pdf.data.data_reader_writer import FileBasedDataWriter, FileBasedDataReader
+from magic_pdf.data.dataset import PymuDocDataset
+from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
+from magic_pdf.config.enums import SupportedPdfParseMethod
+
+@op(
+    ins={"pdf_path": In(str)},
+    description="处理 PDF，输出图片、结构标注 PDF、Markdown 和 JSON 内容列表"
+)
+def process_pdf_file_to_markdown(context, pdf_path: str):
+    context.log.info(f"开始结构化处理 PDF 文件: {pdf_path}")
+    
+    # 文件名与目录
+    pdf_file_name = os.path.basename(pdf_path)
+    name_without_suff = pdf_file_name.split(".")[0]
+    local_image_dir, local_md_dir = "output/images", "output"
+    os.makedirs(local_image_dir, exist_ok=True)
+    
+    image_writer = FileBasedDataWriter(local_image_dir)
+    md_writer = FileBasedDataWriter(local_md_dir)
+    image_dir = os.path.basename(local_image_dir)
+
+    # 读取 PDF 为 bytes
+    reader = FileBasedDataReader("")
+    pdf_bytes = reader.read(pdf_path)
+
+    # 构造数据集
+    ds = PymuDocDataset(pdf_bytes)
+
+    # 推理（OCR 或 非OCR）
+    if ds.classify() == SupportedPdfParseMethod.OCR:
+        context.log.info("文档类型为 OCR，使用 OCR 模式处理")
+        infer_result = ds.apply(doc_analyze, ocr=True)
+        pipe_result = infer_result.pipe_ocr_mode(image_writer)
+    else:
+        context.log.info("文档为文本型，使用文本模式处理")
+        infer_result = ds.apply(doc_analyze, ocr=False)
+        pipe_result = infer_result.pipe_txt_mode(image_writer)
+
+    # 输出结果
+    infer_result.draw_model(os.path.join(local_md_dir, f"{name_without_suff}_model.pdf"))
+    pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))
+    pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))
+    pipe_result.dump_md(md_writer, f"{name_without_suff}.md", image_dir)
+    pipe_result.dump_content_list(md_writer, f"{name_without_suff}_content_list.json", image_dir)
+
+    context.log.info(f"PDF 文件 {pdf_file_name} 处理完成，输出目录为 {local_md_dir}")
+
+
 @job
 def process_pdf_job():
     checked_path = check_pdf_size()
     process_pdf_file_to_pngs(checked_path)
     process_pdf_file_to_pdf(checked_path)
+    process_pdf_file_to_markdown(checked_path)
