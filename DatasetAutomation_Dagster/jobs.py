@@ -1,6 +1,7 @@
-from dagster import op, job, In, String
+from dagster import op, job, In, String,Out
 from pdf2image import convert_from_path
 import os
+import json
 
 @op(ins={"pdf_path": In(String)},
     description="检查 PDF 文件大小是否超过 20MB")
@@ -12,6 +13,7 @@ def check_pdf_size(context, pdf_path: str) -> str:
     return pdf_path
 
 @op(ins={"pdf_path": In(String)},
+    out=Out(dict),
     description="将 PDF 每一页转换为 PNG 图片并保存")
 def process_pdf_file_to_pngs(context, pdf_path: str):
     context.log.info(f"开始处理 PDF 文件: {pdf_path}")
@@ -21,6 +23,13 @@ def process_pdf_file_to_pngs(context, pdf_path: str):
     for i, image in enumerate(images):
         image.save(f"{output_dir}/page_{i + 1}.png", "PNG")
     context.log.info(f"PDF 转换完成，保存为 PNG 文件：{output_dir}")
+    return {"code": "00000", "message": "success", "data": {"images_dir": output_dir}}
+
+@op
+def handle_result(context, result_from_prev: dict):
+    context.log.info(f"收到处理结果：{result_from_prev}")
+    images_dir = result_from_prev["data"]["images_dir"]
+
 
 @op(ins={"pdf_path": In(String)},
     description="复制原始 PDF 文件（示例操作，可扩展为加水印等）")
@@ -84,9 +93,34 @@ def process_pdf_file_to_markdown(context, pdf_path: str):
     context.log.info(f"PDF 文件 {pdf_file_name} 处理完成，输出目录为 {local_md_dir}")
 
 
+@op(ins={"pdf_path": In(String)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据（示例）")
+def process_pdf_file_to_json(context, pdf_path: str):
+    print("pdf_path")
+    print(pdf_path)
+    json_data = {
+        "file": pdf_path,
+        "content": [
+            {"page": 1, "text": "示例文本页1"},
+            {"page": 2, "text": "示例文本页2"}
+        ]
+    }
+    context.log.info(f"提取 JSON 数据: {json_data}")
+    return json_data
+
+
+@op(ins={"result_from_prev": In()}, description="处理 JSON 数据结果")
+def handle_json(context, result_from_prev):
+    context.log.info(f"从数据库读取的 JSON 数据: {result_from_prev}")
+
+
+
 @job
 def process_pdf_job():
     checked_path = check_pdf_size()
-    process_pdf_file_to_pngs(checked_path)
+    pngs=process_pdf_file_to_pngs(checked_path)
     process_pdf_file_to_pdf(checked_path)
     process_pdf_file_to_markdown(checked_path)
+    handle_result(pngs)
+
+    jsonResult = process_pdf_file_to_json(checked_path)
+    handle_json(jsonResult)

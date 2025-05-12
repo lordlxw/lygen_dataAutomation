@@ -7,7 +7,7 @@ import logging
 
 from dagster import DagsterInstance, in_process_executor, execute_job,reconstructable
 from DatasetAutomation_Dagster.jobs import process_pdf_job  # 确保导入正确
-
+from DatasetAutomation_Dagster.iomanagers import json_file_io_manager,sqlite_io_manager,postgres_io_manager
 # 设置 DAGSTER_HOME 环境变量
 os.environ["DAGSTER_HOME"] = str(Path.home() / "dagster_home")
 Path(os.environ["DAGSTER_HOME"]).mkdir(exist_ok=True)
@@ -32,6 +32,7 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 @app.route('/upload', methods=['POST'])
 def upload_pdf():
     try:
+        # 校验文件是否存在
         if 'file' not in request.files:
             logger.error("No file part in the request")
             return jsonify({
@@ -49,14 +50,24 @@ def upload_pdf():
                 "value": None
             }), 400
 
+        # 校验 route 参数
         route = request.form.get("route", "to_pngs")
-        if route not in ["to_pngs", "to_pdf"]:
+        if route not in ["to_pngs", "to_pdf", "to_json"]:
             return jsonify({
-                "message": "无效的 route 参数（应为 'to_pngs' 或 'to_pdf'）",
+                "message": "无效的 route 参数（应为 'to_pngs'、'to_pdf' 或 'to_json'）",
                 "code": "00003",
                 "value": None
             }), 400
 
+        # 选择要执行的 op 分支
+        if route == "to_pngs":
+            op_selection = ["check_pdf_size", "process_pdf_file_to_pngs"]
+        elif route == "to_pdf":
+            op_selection = ["check_pdf_size", "process_pdf_file_to_pdf"]
+        elif route == "to_json":
+            op_selection = ["check_pdf_size", "process_pdf_file_to_json", "handle_json"]
+
+        # 构造保存路径
         original_filename = file.filename.rsplit('.', 1)[0]
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         filename = f"{original_filename}_{timestamp}.pdf"
@@ -64,21 +75,14 @@ def upload_pdf():
         file.save(file_path)
         logger.info(f"文件保存到路径：{file_path}")
 
+        # 记录当前 PDF 路径
         with open("current_pdf_path.txt", "w") as f:
             f.write(str(file_path.resolve()))
 
         logger.info("调用 Dagster 作业...")
 
-        reconstructable_job = reconstructable(process_pdf_job)
-
-        # 根据 route 选择要执行哪些 op
-        if route == "to_pngs":
-            op_selection = ["check_pdf_size", "process_pdf_file_to_pngs"]
-        else:
-            op_selection = ["check_pdf_size", "process_pdf_file_to_pdf"]
-
-        result = execute_job(
-            job=reconstructable_job,
+        # 执行 Dagster 作业
+        result = process_pdf_job.execute_in_process(
             run_config={
                 "ops": {
                     "check_pdf_size": {
@@ -91,12 +95,20 @@ def upload_pdf():
                     "config": {
                         "in_process": {}
                     }
+                },
+                "resources": {
+                    "postgres_io_manager": {
+                        "config": {}
+                    }
                 }
             },
-            op_selection=op_selection,
-            instance=dagster_instance
+            resources={
+                "postgres_io_manager": postgres_io_manager
+            },
+            op_selection=op_selection
         )
 
+        # 输出作业事件日志
         for event in result.all_events:
             logger.info(f"{event.event_type_value}: {event.message}")
 
@@ -130,11 +142,6 @@ def upload_pdf():
             "code": "00005",
             "value": None
         }), 500
-
-
-
-
-
 
 
 
