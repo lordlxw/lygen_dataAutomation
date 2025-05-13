@@ -4,7 +4,7 @@ from pathlib import Path
 from flask import Flask, request, jsonify
 from datetime import datetime
 import logging
-
+import threading
 from dagster import DagsterInstance, in_process_executor, execute_job,reconstructable
 from DatasetAutomation_Dagster.jobs import process_pdf_job  # 确保导入正确
 from DatasetAutomation_Dagster.iomanagers import json_file_io_manager,sqlite_io_manager,postgres_io_manager

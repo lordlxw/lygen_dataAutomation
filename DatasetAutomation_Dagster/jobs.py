@@ -1,6 +1,7 @@
 from dagster import op, job, In, String,Out
 from pdf2image import convert_from_path
 import os
+import subprocess
 import json
 
 @op(ins={"pdf_path": In(String)},
@@ -93,19 +94,56 @@ def process_pdf_file_to_markdown(context, pdf_path: str):
     context.log.info(f"PDF 文件 {pdf_file_name} 处理完成，输出目录为 {local_md_dir}")
 
 
+import os
+import subprocess
+from dagster import op, In, Out
+
 @op(ins={"pdf_path": In(String)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据（示例）")
 def process_pdf_file_to_json(context, pdf_path: str):
-    print("pdf_path")
-    print(pdf_path)
-    json_data = {
-        "file": pdf_path,
-        "content": [
-            {"page": 1, "text": "示例文本页1"},
-            {"page": 2, "text": "示例文本页2"}
-        ]
-    }
-    context.log.info(f"提取 JSON 数据: {json_data}")
-    return json_data
+    try:
+        # 获取 run_id
+        run_id = context.run_id
+        context.log.info(f"Run ID: {run_id}")
+
+        # 创建一个以 run_id 为名字的输出目录
+        output_dir = os.path.join("output_dir", str(run_id))
+        os.makedirs(output_dir, exist_ok=True)
+
+        # 调用 magic-pdf 命令，使用 subprocess 执行命令
+        command = ["magic-pdf", "-p", pdf_path, "-o", output_dir, "-m", "auto"]
+        context.log.info(f"Running command: {' '.join(command)}")
+
+        # 执行命令
+        result = subprocess.run(command, capture_output=True, text=True)
+
+        # 如果命令执行失败，记录错误信息
+        if result.returncode != 0:
+            context.log.error(f"Error running magic-pdf: {result.stderr}")
+        else:
+            context.log.info(f"magic-pdf executed successfully, output in: {output_dir}")
+
+        # 生成模拟的 JSON 数据返回
+        json_data = {
+            "file": pdf_path,
+            "content": [
+                {"page": 1, "text": "示例文本页1"},
+                {"page": 2, "text": "示例文本页2"}
+            ]
+        }
+        
+        context.log.info(f"提取 JSON 数据: {json_data}")
+        return json_data
+
+    except subprocess.CalledProcessError as e:
+        # 捕获 subprocess 相关的异常并记录错误
+        context.log.error(f"Subprocess error: {e}")
+        raise
+
+    except Exception as e:
+        # 捕获其他任何异常并记录
+        context.log.error(f"An error occurred: {e}")
+        raise
+
 
 
 @op(ins={"result_from_prev": In()}, description="处理 JSON 数据结果")
