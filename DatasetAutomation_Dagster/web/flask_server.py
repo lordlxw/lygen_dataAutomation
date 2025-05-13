@@ -6,6 +6,7 @@ from datetime import datetime
 import logging
 import threading
 from dagster import DagsterInstance, in_process_executor, execute_job,reconstructable
+from DatasetAutomation_Dagster.db import get_pg_conn
 from DatasetAutomation_Dagster.jobs import process_pdf_job  # 确保导入正确
 from DatasetAutomation_Dagster.iomanagers import json_file_io_manager,sqlite_io_manager,postgres_io_manager
 # 设置 DAGSTER_HOME 环境变量
@@ -149,6 +150,9 @@ def upload_pdf():
 
 @app.route('/query_status', methods=['GET'])
 def query_status():
+    '''
+    根据run_id查job完成情况
+    '''
     try:
         logger.info("query_status called")
 
@@ -203,6 +207,55 @@ def query_status():
         }), 500
 
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+# 假设你已有这个函数获取数据库连接
+@app.route('/get_pdf_json', methods=['POST'])
+def get_pdf_json():
+    '''
+    根据run_id查数据库对应数据
+    '''
+    try:
+        # 从请求的JSON体中获取runId
+        data = request.get_json()
+        run_id = data.get('runId')
+        
+        # 检查是否存在runId
+        if not run_id:
+            return jsonify({
+                "message": "runId 参数缺失",
+                "code": "00009",
+                "value": None
+            }), 400
+
+        conn = get_pg_conn()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("""
+                SELECT run_id, text, text_level, type, page_index, create_time
+                FROM pdf_json
+                WHERE run_id = %s
+                ORDER BY page_index
+            """, (run_id,))
+            rows = cur.fetchall()
+
+        return jsonify({
+            "message": "查询成功",
+            "code": "00000",
+            "value": rows
+        }), 200
+
+    except Exception as e:
+        logger.exception("查询 pdf_json 时发生异常")
+        return jsonify({
+            "message": str(e),
+            "code": "00010",
+            "value": None
+        }), 500
+
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 
 

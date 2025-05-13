@@ -3,15 +3,36 @@ from pdf2image import convert_from_path
 import os
 import subprocess
 import json
+from DatasetAutomation_Dagster.db import insert_job_detail
 
 @op(ins={"pdf_path": In(String)},
     description="检查 PDF 文件大小是否超过 20MB")
+@op(
+    ins={"pdf_path": In(str)},
+    description="检查 PDF 文件大小是否超过 20MB，并记录日志到 dataset_job_detail 表"
+)
 def check_pdf_size(context, pdf_path: str) -> str:
     size_mb = os.path.getsize(pdf_path) / (1024 * 1024)
-    context.log.info(f"PDF 大小: {size_mb:.2f}MB")
-    if size_mb > 20:
-        raise Exception(f"PDF 文件过大：{size_mb:.2f}MB，不能超过 20MB，文件路径：{pdf_path}")
-    return pdf_path
+    job_run_id = context.run_id
+    job_name = context.op.name
+    custom_id = os.path.basename(pdf_path)
+
+    try:
+        context.log.info(f"PDF 大小: {size_mb:.2f}MB")
+
+        if size_mb > 20:
+            raise Exception(f"PDF 文件过大：{size_mb:.2f}MB，不能超过 20MB，路径：{pdf_path}")
+
+        # ✅ 正常情况下插入日志：状态 success
+        insert_job_detail(job_run_id, job_name, custom_id)
+
+        return pdf_path
+
+    except Exception as e:
+        # ❌ 异常情况下也插入日志（如果你扩展了日志表结构）
+        context.log.error(str(e))
+        # insert_job_detail(job_run_id, job_name, custom_id)  # 可扩展加上 status='fail', error_msg=str(e)
+        raise
 
 @op(ins={"pdf_path": In(String)},
     out=Out(dict),
@@ -98,51 +119,72 @@ import os
 import subprocess
 from dagster import op, In, Out
 
-@op(ins={"pdf_path": In(String)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据（示例）")
+import os
+import subprocess
+import json
+from dagster import op, In, Out
+
+@op(ins={"pdf_path": In(str)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据并保存至数据库")
 def process_pdf_file_to_json(context, pdf_path: str):
     try:
-        # 获取 run_id
         run_id = context.run_id
+
         context.log.info(f"Run ID: {run_id}")
 
-        # 创建一个以 run_id 为名字的输出目录
         output_dir = os.path.join("output_dir", str(run_id))
         os.makedirs(output_dir, exist_ok=True)
+        context.log.info(f"输出目录为: {output_dir}")
 
-        # 调用 magic-pdf 命令，使用 subprocess 执行命令
         command = ["magic-pdf", "-p", pdf_path, "-o", output_dir, "-m", "auto"]
         context.log.info(f"Running command: {' '.join(command)}")
 
-        # 执行命令
         result = subprocess.run(command, capture_output=True, text=True)
-
-        # 如果命令执行失败，记录错误信息
         if result.returncode != 0:
             context.log.error(f"Error running magic-pdf: {result.stderr}")
-        else:
-            context.log.info(f"magic-pdf executed successfully, output in: {output_dir}")
+            raise Exception(f"magic-pdf failed: {result.stderr}")
+        context.log.info("magic-pdf 执行成功")
 
-        # 生成模拟的 JSON 数据返回
+        # ✅ 递归查找 JSON 文件
+        target_json = None
+        for root, dirs, files in os.walk(output_dir):
+            for file in files:
+                if file.endswith("_content_list.json"):
+                    target_json = os.path.join(root, file)
+                    context.log.info(f"找到 JSON 文件: {target_json}")
+                    break
+            if target_json:
+                break
+
+        if not target_json or not os.path.exists(target_json):
+            raise FileNotFoundError("未找到 _content_list.json 文件")
+
+        # ✅ 读取 JSON 内容
+        with open(target_json, "r", encoding="utf-8") as f:
+            json_data1 = json.load(f)
+
+        # 打印 json_data1 看它的结构
+        context.log.info(f"读取的 JSON 数据: {json_data1}")
+
+        # 返回 JSON 数据，确保结构符合数据库需要的格式
         json_data = {
             "file": pdf_path,
             "content": [
-                {"page": 1, "text": "示例文本页1"},
-                {"page": 2, "text": "示例文本页2"}
+                {"page": item["page_idx"], "text": item["text"]} 
+                for item in json_data1
             ]
         }
-        
+
         context.log.info(f"提取 JSON 数据: {json_data}")
         return json_data
 
     except subprocess.CalledProcessError as e:
-        # 捕获 subprocess 相关的异常并记录错误
         context.log.error(f"Subprocess error: {e}")
         raise
 
     except Exception as e:
-        # 捕获其他任何异常并记录
         context.log.error(f"An error occurred: {e}")
         raise
+
 
 
 
