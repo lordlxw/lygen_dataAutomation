@@ -1,4 +1,4 @@
 load_from:
   - python_file:
-      relative_path: DatasetAutomation_Dagster/assets.py
+      relative_path: synapse_flow/assets.py
       location_name: dataset_assets

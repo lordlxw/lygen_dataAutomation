@@ -3,7 +3,7 @@ from pdf2image import convert_from_path
 import os
 import subprocess
 import json
-from DatasetAutomation_Dagster.db import insert_job_detail
+from synapse_flow.db import insert_job_detail
 
 @op(ins={"pdf_path": In(String)},
     description="检查 PDF 文件大小是否超过 20MB")

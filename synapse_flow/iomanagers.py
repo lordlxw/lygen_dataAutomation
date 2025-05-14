@@ -5,7 +5,7 @@ import sqlite3
 import uuid  # 用于生成 UUID
 import psycopg2.extras  # 导入 psycopg2 的 extras 模块来支持 UUID
 from dagster import IOManager, io_manager
-from DatasetAutomation_Dagster.db import get_pg_conn,get_pg_conn_config
+from synapse_flow.db import get_pg_conn,get_pg_conn_config
 class JsonFileIOManager(IOManager):
     def __init__(self, base_dir: str):
         self.base_dir = base_dir

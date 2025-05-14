@@ -1,4 +1,4 @@
-# DatasetAutomation_Dagster
+# synapse_flow
 
 This is a [Dagster](https://dagster.io/) project scaffolded with [`dagster project scaffold`](https://docs.dagster.io/getting-started/create-new-project).
 
@@ -18,7 +18,7 @@ dagster dev
 
 Open http://localhost:3000 with your browser to see the project.
 
-You can start writing assets in `DatasetAutomation_Dagster/assets.py`. The assets are automatically loaded into the Dagster code location as you define them.
+You can start writing assets in `synapse_flow/assets.py`. The assets are automatically loaded into the Dagster code location as you define them.
 
 ## Development
 

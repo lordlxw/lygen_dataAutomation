@@ -17,6 +17,6 @@ __pycache__/
 
 
 # 忽略 web 文件夹下的 __pycache__ 文件夹
-DatasetAutomation_Dagster/web/__pycache__/
+synapse_flow/web/__pycache__/
 
-DatasetAutomation_Dagster/__pycache__/
+synapse_flow/__pycache__/
