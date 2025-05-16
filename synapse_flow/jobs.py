@@ -3,7 +3,7 @@ from pdf2image import convert_from_path
 import os
 import subprocess
 import json
-from synapse_flow.db import insert_job_detail
+from synapse_flow.db import insert_job_detail,insert_pdf_info
 
 @op(ins={"pdf_path": In(String)},
     description="检查 PDF 文件大小是否超过 20MB")
@@ -11,7 +11,7 @@ from synapse_flow.db import insert_job_detail
     ins={"pdf_path": In(str)},
     description="检查 PDF 文件大小是否超过 20MB，并记录日志到 dataset_job_detail 表"
 )
-def check_pdf_size(context, pdf_path: str) -> str:
+def check_pdf_size(context, pdf_path: str,task_id: int) -> str:
     size_mb = os.path.getsize(pdf_path) / (1024 * 1024)
     job_run_id = context.run_id
     job_name = context.op.name
@@ -20,11 +20,12 @@ def check_pdf_size(context, pdf_path: str) -> str:
     try:
         context.log.info(f"PDF 大小: {size_mb:.2f}MB")
 
-        if size_mb > 20:
-            raise Exception(f"PDF 文件过大：{size_mb:.2f}MB，不能超过 20MB，路径：{pdf_path}")
+        if size_mb > 200:
+            raise Exception(f"PDF 文件过大：{size_mb:.2f}MB，不能超过 200MB，路径：{pdf_path}")
 
         # ✅ 正常情况下插入日志：状态 success
-        insert_job_detail(job_run_id, job_name, custom_id)
+        insert_job_detail(job_run_id, job_name, custom_id,task_id)
+
 
         return pdf_path
 
@@ -122,6 +123,7 @@ from dagster import op, In, Out
 import os
 import subprocess
 import json
+import magic_pdf
 from dagster import op, In, Out
 
 @op(ins={"pdf_path": In(str)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据并保存至数据库")
@@ -146,13 +148,18 @@ def process_pdf_file_to_json(context, pdf_path: str):
 
         # ✅ 递归查找 JSON 文件
         target_json = None
+        layout_pdf_path = None
         for root, dirs, files in os.walk(output_dir):
             for file in files:
                 if file.endswith("_content_list.json"):
                     target_json = os.path.join(root, file)
                     context.log.info(f"找到 JSON 文件: {target_json}")
+                elif file.endswith("_layout.pdf"):
+                    layout_pdf_path = os.path.join(root, file)
+                    context.log.info(f"找到 _layout PDF 文件: {layout_pdf_path}")
+                    insert_pdf_info(run_id,layout_pdf_path)
                     break
-            if target_json:
+            if target_json and layout_pdf_path:
                 break
 
         if not target_json or not os.path.exists(target_json):
@@ -167,12 +174,16 @@ def process_pdf_file_to_json(context, pdf_path: str):
 
         # 返回 JSON 数据，确保结构符合数据库需要的格式
         json_data = {
-            "file": pdf_path,
-            "content": [
-                {"page": item["page_idx"], "text": item["text"]} 
-                for item in json_data1
-            ]
+    "file": pdf_path,
+    "content": [
+        {
+            "page": item.get("page_idx", -1),
+            "text": item.get("text", "")
         }
+        for item in json_data1
+    ]
+}
+
 
         context.log.info(f"提取 JSON 数据: {json_data}")
         return json_data

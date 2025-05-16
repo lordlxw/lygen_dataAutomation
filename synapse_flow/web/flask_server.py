@@ -11,6 +11,7 @@ from synapse_flow.jobs import process_pdf_job  # 确保导入正确
 from synapse_flow.iomanagers import json_file_io_manager,sqlite_io_manager,postgres_io_manager
 
 from synapse_flow.web.apis.dataset_task import dataset_task_bp  # 导入蓝图
+from synapse_flow.web.apis.dataset_job import dataset_job_bp  # 导入蓝图
 # 设置 DAGSTER_HOME 环境变量
 os.environ["DAGSTER_HOME"] = str(Path.home() / "dagster_home")
 Path(os.environ["DAGSTER_HOME"]).mkdir(exist_ok=True)
@@ -28,6 +29,7 @@ from flasgger import Swagger
 app = Flask(__name__)
 # 注册蓝图，设置 url_prefix 为 /api
 app.register_blueprint(dataset_task_bp, url_prefix='/api')
+app.register_blueprint(dataset_job_bp, url_prefix='/api')
 swagger = Swagger(app, template={
     "swagger": "2.0",
     "info": {
@@ -51,97 +53,195 @@ dagster_instance = DagsterInstance.get()  # 使用全局持久化实例
 # 最大文件大小限制（单位：字节）
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 
+# @app.route('/upload', methods=['POST'])
+# def upload_pdf():
+#     """
+#     上传 PDF 文件并触发处理流程（支持 task_id 参数）
+#     ---
+#     consumes:
+#       - multipart/form-data
+#     parameters:
+#       - name: file
+#         in: formData
+#         type: file
+#         required: true
+#         description: 要上传的 PDF 文件
+#       - name: route
+#         in: formData
+#         type: string
+#         required: false
+#         enum: ["to_pngs", "to_pdf", "to_json"]
+#         default: "to_pngs"
+#         description: 选择处理流程（默认是 to_pngs）
+#       - name: task_id
+#         in: formData
+#         type: integer
+#         required: true
+#         description: 与任务绑定的 ID
+#     responses:
+#       200:
+#         description: 成功执行 Dagster 作业
+#       400:
+#         description: 参数错误
+#       500:
+#         description: 服务器内部错误
+#     """
+#     try:
+#         # 校验文件是否存在
+#         if 'file' not in request.files:
+#             logger.error("No file part in the request")
+#             return jsonify({
+#                 "message": "No file part in the request",
+#                 "code": "00001",
+#                 "value": None
+#             }), 400
+
+#         file = request.files['file']
+#         if file.filename == '':
+#             logger.error("No selected file")
+#             return jsonify({
+#                 "message": "No selected file",
+#                 "code": "00002",
+#                 "value": None
+#             }), 400
+
+#         # 校验 route 参数
+#         route = request.form.get("route", "to_pngs")
+#         if route not in ["to_pngs", "to_pdf", "to_json"]:
+#             return jsonify({
+#                 "message": "无效的 route 参数（应为 'to_pngs'、'to_pdf' 或 'to_json'）",
+#                 "code": "00003",
+#                 "value": None
+#             }), 400
+
+#         # 提取并校验 task_id
+#         task_id = request.form.get("task_id")
+#         if not task_id:
+#             return jsonify({
+#                 "message": "缺少 task_id 参数",
+#                 "code": "00006",
+#                 "value": None
+#             }), 400
+
+#         try:
+#             task_id = int(task_id)
+#         except ValueError:
+#             return jsonify({
+#                 "message": "task_id 必须是整数",
+#                 "code": "00007",
+#                 "value": None
+#             }), 400
+
+#         # 构造保存路径
+#         original_filename = file.filename.rsplit('.', 1)[0]
+#         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+#         filename = f"{original_filename}_{timestamp}.pdf"
+#         file_path = UPLOAD_PATH / filename
+#         file.save(file_path)
+#         logger.info(f"文件保存到路径：{file_path}")
+
+#         # 写入当前 PDF 路径文件（可选）
+#         with open("current_pdf_path.txt", "w") as f:
+#             f.write(str(file_path.resolve()))
+
+#         logger.info("调用 Dagster 作业...")
+
+#         # 构建 op_selection
+#         if route == "to_pngs":
+#             op_selection = ["check_pdf_size", "process_pdf_file_to_pngs"]
+#         elif route == "to_pdf":
+#             op_selection = ["check_pdf_size", "process_pdf_file_to_pdf"]
+#         elif route == "to_json":
+#             op_selection = ["check_pdf_size", "process_pdf_file_to_json", "handle_json"]
+
+#         # 执行 Dagster 作业
+#         result = process_pdf_job.execute_in_process(
+#             run_config={
+#                 "ops": {
+#                     "check_pdf_size": {
+#                         "inputs": {
+#                             "pdf_path": str(file_path),
+#                             "task_id": task_id
+#                         }
+#                     }
+#                 },
+#                 "execution": {
+#                     "config": {
+#                         "in_process": {}
+#                     }
+#                 },
+#                 "resources": {
+#                     "postgres_io_manager": {
+#                         "config": {}
+#                     }
+#                 }
+#             },
+#             resources={
+#                 "postgres_io_manager": postgres_io_manager
+#             },
+#             op_selection=op_selection
+#         )
+
+#         # 输出事件日志
+#         for event in result.all_events:
+#             logger.info(f"{event.event_type_value}: {event.message}")
+
+#         if result.success:
+#             return jsonify({
+#                 "message": "Dagster job succeeded",
+#                 "code": "00000",
+#                 "value": {
+#                     "runId": result.run_id
+#                 }
+#             }), 200
+#         else:
+#             errors = [
+#                 f"[{event.step_key}] {event.message}"
+#                 for event in result.all_events
+#                 if event.event_type_value == "STEP_FAILURE"
+#             ]
+#             return jsonify({
+#                 "message": "Dagster job failed",
+#                 "code": "00004",
+#                 "value": {
+#                     "runId": None,
+#                     "errors": errors
+#                 }
+#             }), 500
+
+#     except Exception as e:
+#         logger.exception("上传处理过程中发生异常")
+#         return jsonify({
+#             "message": str(e),
+#             "code": "00005",
+#             "value": None
+#         }), 500
+
 @app.route('/upload', methods=['POST'])
 def upload_pdf():
-    """
-    上传 PDF 文件并触发处理流程
-    ---
-    consumes:
-      - multipart/form-data
-    parameters:
-      - name: file
-        in: formData
-        type: file
-        required: true
-        description: 要上传的 PDF 文件
-      - name: route
-        in: formData
-        type: string
-        required: false
-        enum: ["to_pngs", "to_pdf", "to_json"]
-        default: "to_pngs"
-        description: 选择处理流程（默认是 to_pngs）
-    responses:
-      200:
-        description: 成功执行 Dagster 作业
-        examples:
-          application/json:
-            message: "Dagster job succeeded"
-            code: "00000"
-            value:
-              runId: "abc123"
-      400:
-        description: 参数错误
-      500:
-        description: 服务器内部错误
-    """
     try:
-        # 校验文件是否存在
-        if 'file' not in request.files:
-            logger.error("No file part in the request")
-            return jsonify({
-                "message": "No file part in the request",
-                "code": "00001",
-                "value": None
-            }), 400
-
         file = request.files['file']
-        if file.filename == '':
-            logger.error("No selected file")
-            return jsonify({
-                "message": "No selected file",
-                "code": "00002",
-                "value": None
-            }), 400
-
-        # 校验 route 参数
         route = request.form.get("route", "to_pngs")
-        if route not in ["to_pngs", "to_pdf", "to_json"]:
-            return jsonify({
-                "message": "无效的 route 参数（应为 'to_pngs'、'to_pdf' 或 'to_json'）",
-                "code": "00003",
-                "value": None
-            }), 400
+        task_id = int(request.form.get("task_id"))
 
-        # 选择要执行的 op 分支
-        if route == "to_pngs":
-            op_selection = ["check_pdf_size", "process_pdf_file_to_pngs"]
-        elif route == "to_pdf":
-            op_selection = ["check_pdf_size", "process_pdf_file_to_pdf"]
-        elif route == "to_json":
-            op_selection = ["check_pdf_size", "process_pdf_file_to_json", "handle_json"]
-
-        # 构造保存路径
-        original_filename = file.filename.rsplit('.', 1)[0]
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"{original_filename}_{timestamp}.pdf"
+        filename = f"{Path(file.filename).stem}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
         file_path = UPLOAD_PATH / filename
         file.save(file_path)
-        logger.info(f"文件保存到路径：{file_path}")
 
-        # 记录当前 PDF 路径
-        with open("current_pdf_path.txt", "w") as f:
-            f.write(str(file_path.resolve()))
+        op_selection = {
+            "to_pngs": ["check_pdf_size", "process_pdf_file_to_pngs"],
+            "to_pdf": ["check_pdf_size", "process_pdf_file_to_pdf"],
+            "to_json": ["check_pdf_size", "process_pdf_file_to_json", "handle_json"]
+        }.get(route)
 
-        logger.info("调用 Dagster 作业...")
-
-        # 执行 Dagster 作业
+        # ✅ 直接执行 Dagster 作业（同步）
         result = process_pdf_job.execute_in_process(
             run_config={
                 "ops": {
                     "check_pdf_size": {
                         "inputs": {
-                            "pdf_path": str(file_path)
+                            "pdf_path": str(file_path),
+                            "task_id": task_id
                         }
                     }
                 },
@@ -162,35 +262,20 @@ def upload_pdf():
             op_selection=op_selection
         )
 
-        # 输出作业事件日志
-        for event in result.all_events:
-            logger.info(f"{event.event_type_value}: {event.message}")
+        logger.info(f"[Task {task_id}] Dagster run finished. Success: {result.success}, run_id: {result.run_id}")
 
-        if result.success:
-            return jsonify({
-                "message": "Dagster job succeeded",
-                "code": "00000",
-                "value": {
-                    "runId": result.run_id
-                }
-            }), 200
-        else:
-            errors = [
-                f"[{event.step_key}] {event.message}"
-                for event in result.all_events
-                if event.event_type_value == "STEP_FAILURE"
-            ]
-            return jsonify({
-                "message": "Dagster job failed",
-                "code": "00004",
-                "value": {
-                    "runId": None,
-                    "errors": errors
-                }
-            }), 500
+        return jsonify({
+            "message": "任务执行完成",
+            "code": "00000" if result.success else "00002",
+            "value": {
+                "task_id": task_id,
+                "run_id": result.run_id,
+                "file": str(file_path.name)
+            }
+        }), 200
 
     except Exception as e:
-        logger.exception("上传处理过程中发生异常")
+        logger.exception("上传处理异常")
         return jsonify({
             "message": str(e),
             "code": "00005",
@@ -346,5 +431,7 @@ def get_pdf_json():
 
 
 
+# if __name__ == '__main__':
+#     app.run(debug=True, host='0.0.0.0', port=6666)
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=6666)
+    app.run(host='0.0.0.0', port=6666)

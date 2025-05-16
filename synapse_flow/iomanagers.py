@@ -81,34 +81,65 @@ class PostgresIOManager(IOManager):
     def __init__(self, db_params: dict):
         self.db_params = db_params
     
+
+    # def handle_output(self, context, obj: Any):
+    # # 获取从op返回的数据 (包含文件内容)
+    #     pdf_data = obj
+    #     context.log.info(f"handle_output!!!")
+    #     context.log.info(obj)
+    #     # 与数据库连接
+    #     connection = psycopg2.connect(**self.db_params)
+    #     cursor = connection.cursor()
+    #     create_time = datetime.now()  # ✅ 当前时间戳
+    #     # 假设 run_id 是通过上下文动态传递的，或者根据需求生成
+    #     run_id = context.step_context.run_id
+    #     # 可以使用 run_id 作为 pdf_id，确保唯一性
+
+    #     # 插入每条内容到数据库
+    #     for item in pdf_data['content']:
+    #         text = item['text']
+    #         page = item['page']
+
+    #         # 插入数据，新增 version 字段，默认 0
+    #         cursor.execute("""
+    #             INSERT INTO pdf_json (run_id, text, text_level, type, page_index, create_time, version)
+    #             VALUES (%s, %s, %s, %s, %s, %s, %s)
+    #         """, (run_id, text, 1, '正文', page, create_time, 0))  # version 默认 0
+
+    #     # 提交事务并关闭连接
+    #     connection.commit()
+    #     cursor.close()
+    #     connection.close()
+
     def handle_output(self, context, obj: Any):
-        # 获取从op返回的数据 (包含文件内容)
         pdf_data = obj
         context.log.info(f"handle_output!!!")
         context.log.info(obj)
-        # 与数据库连接
+
         connection = psycopg2.connect(**self.db_params)
         cursor = connection.cursor()
-        create_time = datetime.now()  # ✅ 当前时间戳
-        # 假设 run_id 是通过上下文动态传递的，或者根据需求生成
+        create_time = datetime.now()
         run_id = context.step_context.run_id
-  # 可以使用 run_id 作为 pdf_id，确保唯一性
-        
-        # 插入每条内容到数据库
+
+        # 用于记录每个 page 的 block_index 累加器
+        page_block_counter = {}
+
         for item in pdf_data['content']:
             text = item['text']
             page = item['page']
-            
-            # 插入数据
+            block_index = page_block_counter.get(page, 0)
+
             cursor.execute("""
-            INSERT INTO pdf_json (run_id, text, text_level, type, page_index, create_time)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (run_id, text, 1, '正文', page, create_time))  # ✅ 添加时间戳
-        
-        # 提交事务并关闭连接
+                INSERT INTO pdf_json (run_id, text, text_level, type, page_index, block_index, create_time, version)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (run_id, text, 1, '正文', page, block_index, create_time, 0))
+
+            page_block_counter[page] = block_index + 1
+
         connection.commit()
         cursor.close()
         connection.close()
+
 
     def load_input(self, context) -> Any:
         # 这里假设你是根据 run_id 获取数据
