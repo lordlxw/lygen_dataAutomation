@@ -123,7 +123,6 @@ from dagster import op, In, Out
 import os
 import subprocess
 import json
-import magic_pdf
 from dagster import op, In, Out
 
 @op(ins={"pdf_path": In(str)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据并保存至数据库")

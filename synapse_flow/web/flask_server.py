@@ -1,7 +1,7 @@
 import sys
 import os
 from pathlib import Path
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,send_from_directory,send_file
 from datetime import datetime
 import logging
 import threading
@@ -12,6 +12,8 @@ from synapse_flow.iomanagers import json_file_io_manager,sqlite_io_manager,postg
 
 from synapse_flow.web.apis.dataset_task import dataset_task_bp  # 导入蓝图
 from synapse_flow.web.apis.dataset_job import dataset_job_bp  # 导入蓝图
+from synapse_flow.web.apis.prompt_job import prompt_job_bp  # 导入蓝图
+from synapse_flow.web.apis.remote_file import remote_file_bp  # 导入蓝图
 # 设置 DAGSTER_HOME 环境变量
 os.environ["DAGSTER_HOME"] = str(Path.home() / "dagster_home")
 Path(os.environ["DAGSTER_HOME"]).mkdir(exist_ok=True)
@@ -26,10 +28,31 @@ from flasgger import Swagger
 
 
 
+# 假设 "output_dir" 在当前目录下
 app = Flask(__name__)
+# 配置静态文件夹：将 output_dir 暴露在 /outputs 路径下
+@app.route('/outputs/<path:filename>')
+def serve_output_file(filename):
+    output_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'output_dir'))
+    full_path = os.path.join(output_root, filename)
+    print(f"[DEBUG] 尝试访问文件: {full_path}")
+    if not os.path.exists(full_path):
+        print("[ERROR] 文件不存在！")
+    return send_from_directory(output_root, filename)
+
+@app.route("/download1")
+def download():
+    # return send_file('test.exe', as_attachment=True)
+    print(f"[DEBUG] 尝试访问文件: 11112222")
+    return send_file('2.jpg')
+
+
+
 # 注册蓝图，设置 url_prefix 为 /api
 app.register_blueprint(dataset_task_bp, url_prefix='/api')
 app.register_blueprint(dataset_job_bp, url_prefix='/api')
+app.register_blueprint(prompt_job_bp, url_prefix='/api')
+app.register_blueprint(remote_file_bp, url_prefix='/api')
 swagger = Swagger(app, template={
     "swagger": "2.0",
     "info": {
@@ -434,4 +457,9 @@ def get_pdf_json():
 # if __name__ == '__main__':
 #     app.run(debug=True, host='0.0.0.0', port=6666)
 if __name__ == '__main__':
+    print("[DEBUG] 当前所有路由：")
+    for rule in app.url_map.iter_rules():
+        print(rule)
+        
     app.run(host='0.0.0.0', port=6666)
+

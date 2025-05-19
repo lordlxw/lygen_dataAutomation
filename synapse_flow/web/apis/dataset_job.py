@@ -33,11 +33,7 @@ def insert_version_json():
     
 
 
-from flask import Blueprint, request
-from synapse_flow.web.utils.create_response import create_response
-from synapse_flow.web.services.dataset_job_service import query_pdf_text_contents
 
-dataset_job_bp = Blueprint('dataset_job', __name__)
 
 @dataset_job_bp.route('/getPdfTextContents', methods=['POST'])
 def get_pdf_text_contents():

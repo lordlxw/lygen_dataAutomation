@@ -44,10 +44,10 @@ def insert_pdf_info(job_run_id, pdf_location):
             create_time = datetime.now()
             cur.execute(
                 """
-                INSERT INTO pdf_info (run_id, original_pdf_location, create_time)
-                VALUES (%s, %s, %s)
+                INSERT INTO pdf_info (run_id, original_pdf_location,layout_pdf_location, create_time)
+                VALUES (%s, %s, %s, %s)
                 """,
-                (job_run_id, pdf_location, create_time)
+                (job_run_id, pdf_location,pdf_location, create_time)
             )
         conn.commit()
     finally:
