@@ -82,49 +82,143 @@ class PostgresIOManager(IOManager):
         self.db_params = db_params
     
 
-    # def handle_output(self, context, obj: Any):
-    # # 获取从op返回的数据 (包含文件内容)
-    #     pdf_data = obj
-    #     context.log.info(f"handle_output!!!")
-    #     context.log.info(obj)
-    #     # 与数据库连接
-    #     connection = psycopg2.connect(**self.db_params)
-    #     cursor = connection.cursor()
-    #     create_time = datetime.now()  # ✅ 当前时间戳
-    #     # 假设 run_id 是通过上下文动态传递的，或者根据需求生成
-    #     run_id = context.step_context.run_id
-    #     # 可以使用 run_id 作为 pdf_id，确保唯一性
+    def handleInvoiceInfo(self, data, run_id=None):
+        print("处理发票数据")
+        connection = psycopg2.connect(**self.db_params)
+        cursor = connection.cursor()
+        print(data)
+        # 提取发票 data 部分
+        data = data["ocr_result"]["subMsgs"][0]["result"]["data"]
+        try:
+            create_time = datetime.now()
+            if not run_id:
+                run_id = "unknown_run_id"
 
-    #     # 插入每条内容到数据库
-    #     for item in pdf_data['content']:
-    #         text = item['text']
-    #         page = item['page']
+            # 插入主表数据，新增 created_at 字段改为 create_time，与你要求一致
+            sql_main = """
+                INSERT INTO invoice_main (
+                    invoice_code, invoice_number, printed_invoice_code, printed_invoice_number,
+                    invoice_date, machine_code, check_code, purchaser_name, purchaser_tax_number,
+                    purchaser_contact_info, purchaser_bank_account, password_area,
+                    invoice_amount_pre_tax, invoice_tax, total_amount_in_words, total_amount,
+                    seller_name, seller_tax_number, seller_contact_info, seller_bank_account,
+                    recipient, reviewer, drawer, remarks, title, form_type,
+                    invoice_type, special_tag, create_time, run_id
+                ) VALUES (
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s,
+                    %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s
+                ) RETURNING id
+            """
 
-    #         # 插入数据，新增 version 字段，默认 0
-    #         cursor.execute("""
-    #             INSERT INTO pdf_json (run_id, text, text_level, type, page_index, create_time, version)
-    #             VALUES (%s, %s, %s, %s, %s, %s, %s)
-    #         """, (run_id, text, 1, '正文', page, create_time, 0))  # version 默认 0
+            invoice_date_str = data.get("invoiceDate", "")
+            invoice_date = None
+            if invoice_date_str:
+                try:
+                    invoice_date = datetime.strptime(invoice_date_str, "%Y年%m月%d日").date()
+                except Exception:
+                    invoice_date = None
 
-    #     # 提交事务并关闭连接
-    #     connection.commit()
-    #     cursor.close()
-    #     connection.close()
+            main_values = (
+                data.get("invoiceCode"),
+                data.get("invoiceNumber"),
+                data.get("printedInvoiceCode"),
+                data.get("printedInvoiceNumber"),
+                invoice_date,
+                data.get("machineCode"),
+                data.get("checkCode"),
+                data.get("purchaserName"),
+                data.get("purchaserTaxNumber"),
+                data.get("purchaserContactInfo"),
+                data.get("purchaserBankAccountInfo"),
+                data.get("passwordArea"),
+                data.get("invoiceAmountPreTax"),
+                data.get("invoiceTax"),
+                data.get("totalAmountInWords"),
+                data.get("totalAmount"),
+                data.get("sellerName"),
+                data.get("sellerTaxNumber"),
+                data.get("sellerContactInfo"),
+                data.get("sellerBankAccountInfo"),
+                data.get("recipient"),
+                data.get("reviewer"),
+                data.get("drawer"),
+                data.get("remarks"),
+                data.get("title"),
+                data.get("formType"),
+                data.get("invoiceType"),
+                data.get("specialTag"),
+                create_time,  # 主表 create_time
+                run_id
+            )
+
+            cursor.execute(sql_main, main_values)
+            invoice_main_id = cursor.fetchone()[0]
+
+            # 插入明细表数据，增加 create_time 字段
+            details = data.get("invoiceDetails", [])
+            sql_detail = """
+                INSERT INTO invoice_detail (
+                    invoice_id, item_name, specification, unit,
+                    quantity, unit_price, amount, tax_rate, tax, create_time
+                ) VALUES (
+                    %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s
+                )
+            """
+            for detail in details:
+                detail_values = (
+                    invoice_main_id,
+                    detail.get("itemName"),
+                    detail.get("specification"),
+                    detail.get("unit"),
+                    detail.get("quantity"),
+                    detail.get("unitPrice"),
+                    detail.get("amount"),
+                    detail.get("taxRate"),
+                    detail.get("tax"),
+                    create_time  # 明细表 create_time
+                )
+                cursor.execute(sql_detail, detail_values)
+
+            connection.commit()
+            print(f"Invoice {invoice_main_id} and details saved successfully.")
+
+        except Exception as e:
+            connection.rollback()
+            print(f"Error saving invoice info: {e}")
+        finally:
+            cursor.close()
+            connection.close()
+
 
     def handle_output(self, context, obj: Any):
-        pdf_data = obj
+        data = obj
+
+        run_id = context.step_context.run_id
+
+         # 根据type字段走不同分支
+        data_type = data.get("type")
+        if data_type == "image":
+            self.handleInvoiceInfo(data, run_id)  # ✅ 正确调用类内部方法
+            return;
         context.log.info(f"handle_output!!!")
+        context.log.info(context)
         context.log.info(obj)
 
         connection = psycopg2.connect(**self.db_params)
         cursor = connection.cursor()
         create_time = datetime.now()
-        run_id = context.step_context.run_id
-
+        print("handle_outputrunningId")
+        print(run_id)
         # 用于记录每个 page 的 block_index 累加器
         page_block_counter = {}
 
-        for item in pdf_data['content']:
+        for item in data['content']:
             text = item['text']
             page = item['page']
             block_index = page_block_counter.get(page, 0)
@@ -182,4 +276,6 @@ def postgres_io_manager(init_context):
     return PostgresIOManager(db_params)
 
 
+
+# 其他持久化实现
 

@@ -14,6 +14,7 @@ from synapse_flow.web.apis.dataset_task import dataset_task_bp  # 导入蓝图
 from synapse_flow.web.apis.dataset_job import dataset_job_bp  # 导入蓝图
 from synapse_flow.web.apis.prompt_job import prompt_job_bp  # 导入蓝图
 from synapse_flow.web.apis.remote_file import remote_file_bp  # 导入蓝图
+from synapse_flow.web.apis.document_recognition import document_recognition_bp  # 导入蓝图
 # 设置 DAGSTER_HOME 环境变量
 os.environ["DAGSTER_HOME"] = str(Path.home() / "dagster_home")
 Path(os.environ["DAGSTER_HOME"]).mkdir(exist_ok=True)
@@ -53,6 +54,7 @@ app.register_blueprint(dataset_task_bp, url_prefix='/api')
 app.register_blueprint(dataset_job_bp, url_prefix='/api')
 app.register_blueprint(prompt_job_bp, url_prefix='/api')
 app.register_blueprint(remote_file_bp, url_prefix='/api')
+app.register_blueprint(document_recognition_bp, url_prefix='/api')
 swagger = Swagger(app, template={
     "swagger": "2.0",
     "info": {

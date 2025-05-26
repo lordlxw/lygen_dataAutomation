@@ -37,19 +37,26 @@ def insert_job_detail(job_run_id, job_name, custom_id, task_id):
         conn.close()
 
 
-def insert_pdf_info(job_run_id, pdf_location):
+def insert_pdf_info(job_run_id, pdf_location, original_pdf_name):
     conn = get_pg_conn()
     try:
         with conn.cursor() as cur:
             create_time = datetime.now()
             cur.execute(
                 """
-                INSERT INTO pdf_info (run_id, original_pdf_location,layout_pdf_location, create_time)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO pdf_info (
+                    run_id,
+                    original_pdf_location,
+                    layout_pdf_location,
+                    original_pdf_name,
+                    create_time
+                )
+                VALUES (%s, %s, %s, %s, %s)
                 """,
-                (job_run_id, pdf_location,pdf_location, create_time)
+                (job_run_id, pdf_location, pdf_location, original_pdf_name, create_time)
             )
         conn.commit()
     finally:
         conn.close()
+
 

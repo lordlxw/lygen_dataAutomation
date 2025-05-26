@@ -1,10 +1,11 @@
 from dagster import op, job, In, String,Out
 from pdf2image import convert_from_path
-import os
-import subprocess
 import json
 from synapse_flow.db import insert_job_detail,insert_pdf_info
-
+from magic_pdf.data.data_reader_writer import FileBasedDataWriter, FileBasedDataReader
+from magic_pdf.data.dataset import PymuDocDataset
+from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
+from magic_pdf.config.enums import SupportedPdfParseMethod
 @op(ins={"pdf_path": In(String)},
     description="检查 PDF 文件大小是否超过 20MB")
 @op(
@@ -67,10 +68,6 @@ def process_pdf_file_to_pdf(context, pdf_path: str):
 from dagster import op, In
 import os
 
-from magic_pdf.data.data_reader_writer import FileBasedDataWriter, FileBasedDataReader
-from magic_pdf.data.dataset import PymuDocDataset
-from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
-from magic_pdf.config.enums import SupportedPdfParseMethod
 
 @op(
     ins={"pdf_path": In(str)},
@@ -120,11 +117,7 @@ import os
 import subprocess
 from dagster import op, In, Out
 
-import os
-import subprocess
 import json
-from dagster import op, In, Out
-
 @op(ins={"pdf_path": In(str)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据并保存至数据库")
 def process_pdf_file_to_json(context, pdf_path: str):
     try:
@@ -144,7 +137,10 @@ def process_pdf_file_to_json(context, pdf_path: str):
             context.log.error(f"Error running magic-pdf: {result.stderr}")
             raise Exception(f"magic-pdf failed: {result.stderr}")
         context.log.info("magic-pdf 执行成功")
-
+        # 提取原始 PDF 文件名（含扩展名）
+        pdf_filename = os.path.basename(pdf_path)
+        # 或者提取不含扩展名的名字
+        pdf_name_without_ext = os.path.splitext(pdf_filename)[0]
         # ✅ 递归查找 JSON 文件
         target_json = None
         layout_pdf_path = None
@@ -156,7 +152,7 @@ def process_pdf_file_to_json(context, pdf_path: str):
                 elif file.endswith("_layout.pdf"):
                     layout_pdf_path = os.path.join(root, file)
                     context.log.info(f"找到 _layout PDF 文件: {layout_pdf_path}")
-                    insert_pdf_info(run_id,layout_pdf_path)
+                    insert_pdf_info(run_id,layout_pdf_path,pdf_name_without_ext)
                     break
             if target_json and layout_pdf_path:
                 break
@@ -211,6 +207,5 @@ def process_pdf_job():
     process_pdf_file_to_pdf(checked_path)
     process_pdf_file_to_markdown(checked_path)
     handle_result(pngs)
-
     jsonResult = process_pdf_file_to_json(checked_path)
     handle_json(jsonResult)

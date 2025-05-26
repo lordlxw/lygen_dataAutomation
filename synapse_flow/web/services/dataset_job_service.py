@@ -1,12 +1,12 @@
 from datetime import datetime
 from synapse_flow.db import get_pg_conn
 
-def insert_pdf_text_contents(run_id: str, contents: list):
+def insert_pdf_text_contents(run_id: str, contents: list, based_version: int = None) -> int:
     """
     批量插入多条 PDF 文本内容，整批内容共用同一个 version。
-    contents 是一个 list，每个元素是一个 dict，对应 PdfTextContent。
-    新增支持传入 BlockIndex。
+    返回新生成的 version。
     """
+    print("insert_pdf_text_contents")
     conn = get_pg_conn()
     try:
         with conn.cursor() as cur:
@@ -16,35 +16,38 @@ def insert_pdf_text_contents(run_id: str, contents: list):
             """, (run_id,))
             max_version = cur.fetchone()[0]
             new_version = max_version + 1
-            create_time = datetime.now()
 
-            # 2. 批量插入，统一 version
+            # 2. 批量插入，统一 version + based_version
             for item in contents:
-                text = item.get("Text", "")
-                page_index = item.get("PageIndex", 0)
-                text_level = item.get("TextLevel", 0)
-                type_ = item.get("Type", "")
-                block_index = item.get("BlockIndex")  # 新增字段
-                create_time_str = item.get("CreateTime")
-
-                # 优先使用传入的 CreateTime，否则用当前时间
-                if create_time_str:
-                    try:
-                        create_time = datetime.fromisoformat(create_time_str)
-                    except Exception:
-                        create_time = datetime.now()
+                text = item.get("text", "")
+                page_index = item.get("page_index", 0)
+                text_level = item.get("text_level", 0)
+                type_ = item.get("type", "")
+                block_index = item.get("block_index")
+                is_title_marked = item.get("is_title_marked", False)  # 默认 False
+                create_time = datetime.now()
 
                 cur.execute("""
-                    INSERT INTO pdf_json (run_id, text, page_index, text_level, create_time, version, type, block_index)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (run_id, text, page_index, text_level, create_time, new_version, type_, block_index))
+                    INSERT INTO pdf_json (
+                        run_id, text, page_index, text_level, create_time,
+                        version, type, block_index, based_version, is_title_marked
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    run_id, text, page_index, text_level, create_time,
+                    new_version, type_, block_index, based_version, is_title_marked
+                ))
 
         conn.commit()
+        return new_version
     except Exception as e:
         conn.rollback()
         raise e
     finally:
         conn.close()
+
+
+
 
 
 
@@ -58,7 +61,8 @@ def query_pdf_text_contents(run_id: str, version: int) -> list:
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT run_id, text, page_index, text_level, create_time, version, type, block_index
+                SELECT id, run_id, text, page_index, text_level, create_time,
+                       version, type, block_index, is_title_marked, based_version
                 FROM pdf_json
                 WHERE run_id = %s AND version = %s
                 ORDER BY page_index ASC, block_index ASC
@@ -67,17 +71,175 @@ def query_pdf_text_contents(run_id: str, version: int) -> list:
             rows = cur.fetchall()
             for row in rows:
                 results.append({
-                    "run_id": row[0],
-                    "text": row[1],
-                    "page_index": row[2],
-                    "text_level": row[3],
-                    "create_time": row[4].isoformat() if row[4] else None,
-                    "version": row[5],
-                    "type": row[6],
-                    "block_index": row[7]
+                    "id": row[0],
+                    "run_id": row[1],
+                    "text": row[2],
+                    "page_index": row[3],
+                    "text_level": row[4],
+                    "create_time": row[5].isoformat() if row[5] else None,
+                    "version": row[6],
+                    "type": row[7],
+                    "block_index": row[8],
+                    # 如果是 None，则改成 False
+                    "is_title_marked": False if row[9] is None else row[9],
+                    "based_version": row[10]
                 })
     finally:
         conn.close()
     return results
 
+
+
+
+
+def query_versions_by_run_id(run_id: str) -> list:
+    """
+    查询某个 run_id 下的所有版本及其创建时间（每个版本最早的 create_time）。
+    返回格式：
+    [
+        {"version": 1, "create_time": "2024-01-01T12:00:00"},
+        {"version": 2, "create_time": "2024-01-02T14:30:00"},
+        ...
+    ]
+    """
+    conn = get_pg_conn()
+    results = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT version, MIN(create_time) AS create_time
+                FROM pdf_json
+                WHERE run_id = %s
+                GROUP BY version
+                ORDER BY version Desc
+            """, (run_id,))
+
+            rows = cur.fetchall()
+            for row in rows:
+                results.append({
+                    "version": row[0],
+                    "create_time": row[1].isoformat() if row[1] else None
+                })
+    finally:
+        conn.close()
+    return results
+
+
+def query_all_pdf_infos() -> list:
+    """
+    查询 pdf_info 表中所有记录，返回 original_pdf_name、create_time 和 run_id 字段。
+    返回格式：
+    [
+        {
+            "original_pdf_name": "xxx.pdf",
+            "create_time": "2024-01-01T12:00:00",
+            "run_id": "xxxx-xxxx-xxxx"
+        },
+        ...
+    ]
+    """
+    conn = get_pg_conn()
+    results = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT original_pdf_name, create_time, run_id
+                FROM pdf_info
+                ORDER BY create_time DESC
+                LIMIT 10
+            """)
+            rows = cur.fetchall()
+            for row in rows:
+                results.append({
+                    "original_pdf_name": row[0],
+                    "create_time": row[1].isoformat() if row[1] else None,
+                    "run_id": row[2]
+                })
+    finally:
+        conn.close()
+    return results
+
+
+
+
+
+def insert_change_log(run_id: str, version: int, change_json_log: str) -> bool:
+    """
+    插入变更日志到 pdf_change_log 表。
+    返回是否成功。
+    """
+    if not run_id or not change_json_log:
+        return False
+
+    conn = get_pg_conn()
+    try:
+        with conn.cursor() as cur:
+            create_time = datetime.now()
+            cur.execute("""
+                INSERT INTO pdf_change_log (run_id, version, change_json_log, create_time)
+                VALUES (%s, %s, %s, %s)
+            """, (run_id, version, change_json_log, create_time))
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f"insert_change_log error: {e}")
+        return False
+    finally:
+        conn.close()
+
+import json
+def query_change_log(run_id: str, version: int) -> dict:
+    conn = get_pg_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT run_id, version, change_json_log, create_time
+                FROM pdf_change_log
+                WHERE run_id = %s AND version = %s
+                LIMIT 1
+            """, (run_id, version))
+            row = cur.fetchone()
+            if not row:
+                return None
+            # row[2] 是字符串，需要转成列表对象
+            change_json_log = row[2]
+            try:
+                # 尝试转成列表或字典
+                change_json_log_obj = json.loads(change_json_log)
+            except Exception:
+                # 转换失败保持原样
+                change_json_log_obj = change_json_log
+
+            return {
+                "run_id": row[0],
+                "version": row[1],
+                "change_json_log": change_json_log_obj,
+                "create_time": row[3].isoformat() if row[3] else None
+            }
+    finally:
+        conn.close()
+
+
+
+def query_based_version(run_id: str, version: int) -> int:
+    """
+    查询指定 run_id 和 version 的记录对应的 based_version。
+    如果不存在，返回 None。
+    """
+    conn = get_pg_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT based_version
+                FROM pdf_json
+                WHERE run_id = %s AND version = %s
+                LIMIT 1
+            """, (run_id, version))
+            row = cur.fetchone()
+            if row:
+                return row[0]
+            return None
+    finally:
+        conn.close()
 
