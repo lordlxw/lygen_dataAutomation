@@ -156,7 +156,22 @@ def process_pdf_file_to_json(context, pdf_path: str):
                     break
             if target_json and layout_pdf_path:
                 break
-
+        # 删除除了找到的这两个文件之外的所有文件和文件夹
+        for root, dirs, files in os.walk(output_dir, topdown=False):  # bottom-up 删除目录方便
+            for file in files:
+                file_path = os.path.join(root, file)
+                if file_path != target_json and file_path != layout_pdf_path:
+                    os.remove(file_path)
+                    context.log.info(f"删除文件: {file_path}")
+            for dir in dirs:
+                dir_path = os.path.join(root, dir)
+                # 删除空文件夹
+                try:
+                    os.rmdir(dir_path)
+                    context.log.info(f"删除空文件夹: {dir_path}")
+                except OSError:
+                    # 目录非空，不删除
+                    pass                   
         if not target_json or not os.path.exists(target_json):
             raise FileNotFoundError("未找到 _content_list.json 文件")
 

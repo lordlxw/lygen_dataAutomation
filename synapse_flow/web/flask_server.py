@@ -242,6 +242,9 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
 #             "value": None
 #         }), 500
 
+from pathlib import Path
+import os
+
 @app.route('/upload', methods=['POST'])
 def upload_pdf():
     try:
@@ -259,7 +262,7 @@ def upload_pdf():
             "to_json": ["check_pdf_size", "process_pdf_file_to_json", "handle_json"]
         }.get(route)
 
-        # ✅ 直接执行 Dagster 作业（同步）
+        # ✅ 执行 Dagster 作业
         result = process_pdf_job.execute_in_process(
             run_config={
                 "ops": {
@@ -289,6 +292,10 @@ def upload_pdf():
 
         logger.info(f"[Task {task_id}] Dagster run finished. Success: {result.success}, run_id: {result.run_id}")
 
+        # ✅ 删除文件（仅在成功或无异常时）
+        if file_path.exists():
+            file_path.unlink()
+
         return jsonify({
             "message": "任务执行完成",
             "code": "00000" if result.success else "00002",
@@ -301,6 +308,12 @@ def upload_pdf():
 
     except Exception as e:
         logger.exception("上传处理异常")
+        # ⚠️ 失败时也尝试清理
+        if 'file_path' in locals() and file_path.exists():
+            try:
+                file_path.unlink()
+            except Exception as cleanup_err:
+                logger.warning(f"清理上传文件失败: {cleanup_err}")
         return jsonify({
             "message": str(e),
             "code": "00005",
