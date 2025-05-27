@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from synapse_flow.web.utils.create_response import create_response
-from synapse_flow.web.services.dataset_job_service import insert_pdf_text_contents,query_pdf_text_contents,query_versions_by_run_id,query_all_pdf_infos,insert_change_log,query_change_log,query_based_version
+from synapse_flow.web.services.dataset_job_service import insert_pdf_text_contents,query_pdf_text_contents,query_versions_by_run_id,query_all_pdf_infos,insert_change_log,query_change_log,query_based_version,query_pdf_infos_by_user_id
 
 dataset_job_bp = Blueprint('dataset_job', __name__)
 
@@ -92,6 +92,26 @@ def get_all_pdf_infos():
 
 import json
 
+
+@dataset_job_bp.route('/getPdfInfosByUserId', methods=['POST'])
+def get_pdf_infos_by_user_id():
+    """
+    根据 user_id 查询对应的 PDF 信息列表。
+    """
+    try:
+        req_json = request.get_json()
+        user_id = req_json.get('user_id')
+        if not user_id:
+            return create_response(data=None, message="缺少 user_id 参数", code="00002"), 400
+
+        # 调用你实际查询方法，返回列表，比如字典列表
+        results = query_pdf_infos_by_user_id(user_id)
+
+        return create_response(data=results, message="查询成功", code="00000")
+    except Exception as e:
+        return create_response(data=None, message=f"查询失败: {str(e)}", code="00002"), 500
+
+
 @dataset_job_bp.route('/insertChangeLog', methods=['POST'])
 def insert_change_log_api():
     body = request.get_json()
@@ -171,3 +191,31 @@ def get_based_version():
             return create_response(data=None, message="未找到对应版本", code="00002"), 404
     except Exception as e:
         return create_response(data=None, message=f"查询失败: {str(e)}", code="00002"), 500
+
+
+
+# 根据runngingId更新userId
+@dataset_job_bp.route('/updateUserIdByRunId', methods=['POST'])
+def update_user_id_by_run_id_api():
+    data = request.get_json()
+
+    if not data or not isinstance(data, dict):
+        return create_response(data=None, message="请求体必须是JSON对象", code="00001"), 400
+
+    run_id = data.get("run_id")
+    user_id = data.get("user_id")
+
+    if not run_id:
+        return create_response(data=None, message="缺少 run_id", code="00001"), 400
+    if not user_id:
+        return create_response(data=None, message="缺少 new_user_id", code="00001"), 400
+
+    try:
+        from synapse_flow.web.services.dataset_job_service import update_user_id_by_run_id
+        success = update_user_id_by_run_id(run_id, user_id)
+        if success:
+            return create_response(data={"run_id": run_id, "new_user_id": user_id}, message="更新成功", code="00000")
+        else:
+            return create_response(data=None, message="更新失败", code="00002"), 500
+    except Exception as e:
+        return create_response(data=None, message=f"更新异常: {str(e)}", code="00002"), 500

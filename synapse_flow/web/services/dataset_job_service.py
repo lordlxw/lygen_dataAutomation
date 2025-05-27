@@ -159,6 +159,41 @@ def query_all_pdf_infos() -> list:
         conn.close()
     return results
 
+def query_pdf_infos_by_user_id(user_id: str) -> list:
+    """
+    根据 user_id 查询 pdf_info 表中对应的记录，返回 original_pdf_name、create_time 和 run_id 字段。
+    返回格式：
+    [
+        {
+            "original_pdf_name": "xxx.pdf",
+            "create_time": "2024-01-01T12:00:00",
+            "run_id": "xxxx-xxxx-xxxx"
+        },
+        ...
+    ]
+    """
+    conn = get_pg_conn()
+    results = []
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT original_pdf_name, create_time, run_id
+                FROM pdf_info
+                WHERE user_id = %s
+                ORDER BY create_time DESC
+                LIMIT 10
+            """, (user_id,))
+            rows = cur.fetchall()
+            for row in rows:
+                results.append({
+                    "original_pdf_name": row[0],
+                    "create_time": row[1].isoformat() if row[1] else None,
+                    "run_id": row[2]
+                })
+    finally:
+        conn.close()
+    return results
+
 
 
 
@@ -240,6 +275,32 @@ def query_based_version(run_id: str, version: int) -> int:
             if row:
                 return row[0]
             return None
+    finally:
+        conn.close()
+
+
+def update_user_id_by_run_id(run_id: str, new_user_id: str) -> bool:
+    """
+    根据 run_id 更新对应记录的 user_id 字段。
+    返回是否更新成功。
+    """
+    if not run_id or not new_user_id:
+        return False
+
+    conn = get_pg_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE pdf_info
+                SET user_id = %s
+                WHERE run_id = %s
+            """, (new_user_id, run_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        conn.rollback()
+        print(f"update_user_id_by_run_id error: {e}")
+        return False
     finally:
         conn.close()
 

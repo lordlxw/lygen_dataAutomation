@@ -15,6 +15,7 @@ from synapse_flow.web.apis.dataset_job import dataset_job_bp  # 导入蓝图
 from synapse_flow.web.apis.prompt_job import prompt_job_bp  # 导入蓝图
 from synapse_flow.web.apis.remote_file import remote_file_bp  # 导入蓝图
 from synapse_flow.web.apis.document_recognition import document_recognition_bp  # 导入蓝图
+from synapse_flow.web.apis.login_bp import login_bp  # 导入蓝图
 # 设置 DAGSTER_HOME 环境变量
 os.environ["DAGSTER_HOME"] = str(Path.home() / "dagster_home")
 Path(os.environ["DAGSTER_HOME"]).mkdir(exist_ok=True)
@@ -55,6 +56,7 @@ app.register_blueprint(dataset_job_bp, url_prefix='/api')
 app.register_blueprint(prompt_job_bp, url_prefix='/api')
 app.register_blueprint(remote_file_bp, url_prefix='/api')
 app.register_blueprint(document_recognition_bp, url_prefix='/api')
+app.register_blueprint(login_bp, url_prefix='/api')
 swagger = Swagger(app, template={
     "swagger": "2.0",
     "info": {
@@ -62,7 +64,7 @@ swagger = Swagger(app, template={
         "description": "PDF 文件处理服务接口文档",
         "version": "1.0.0"
     },
-    "host": "127.0.0.1:6666",
+    "host": "127.0.0.1:6667",
     "basePath": "/",
     "schemes": ["http"],
     "swagger_ui": "/swagger-ui"  # 如果这个路径是正确的
@@ -324,6 +326,8 @@ def upload_pdf():
 
 
 
+
+
 @app.route('/query_status', methods=['GET'])
 def query_status():
     """
@@ -470,11 +474,11 @@ def get_pdf_json():
 
 
 # if __name__ == '__main__':
-#     app.run(debug=True, host='0.0.0.0', port=6666)
+#     app.run(debug=True, host='0.0.0.0', port=6667)
 if __name__ == '__main__':
     print("[DEBUG] 当前所有路由：")
     for rule in app.url_map.iter_rules():
         print(rule)
         
-    app.run(host='0.0.0.0', port=6666)
+    app.run(host='0.0.0.0', port=6667)
 
