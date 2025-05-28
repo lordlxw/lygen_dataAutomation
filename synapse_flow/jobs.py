@@ -120,6 +120,10 @@ from dagster import op, In, Out
 import json
 @op(ins={"pdf_path": In(str)}, out=Out(io_manager_key="postgres_io_manager"), description="提取 JSON 数据并保存至数据库")
 def process_pdf_file_to_json(context, pdf_path: str):
+    import os
+    import subprocess
+    import json
+
     try:
         run_id = context.run_id
 
@@ -137,13 +141,13 @@ def process_pdf_file_to_json(context, pdf_path: str):
             context.log.error(f"Error running magic-pdf: {result.stderr}")
             raise Exception(f"magic-pdf failed: {result.stderr}")
         context.log.info("magic-pdf 执行成功")
-        # 提取原始 PDF 文件名（含扩展名）
+
         pdf_filename = os.path.basename(pdf_path)
-        # 或者提取不含扩展名的名字
         pdf_name_without_ext = os.path.splitext(pdf_filename)[0]
-        # ✅ 递归查找 JSON 文件
+
         target_json = None
         layout_pdf_path = None
+
         for root, dirs, files in os.walk(output_dir):
             for file in files:
                 if file.endswith("_content_list.json"):
@@ -152,12 +156,13 @@ def process_pdf_file_to_json(context, pdf_path: str):
                 elif file.endswith("_layout.pdf"):
                     layout_pdf_path = os.path.join(root, file)
                     context.log.info(f"找到 _layout PDF 文件: {layout_pdf_path}")
-                    insert_pdf_info(run_id,layout_pdf_path,pdf_name_without_ext)
+                    insert_pdf_info(run_id, layout_pdf_path, pdf_name_without_ext)
                     break
             if target_json and layout_pdf_path:
                 break
-        # 删除除了找到的这两个文件之外的所有文件和文件夹
-        for root, dirs, files in os.walk(output_dir, topdown=False):  # bottom-up 删除目录方便
+
+        # 清理无关文件
+        for root, dirs, files in os.walk(output_dir, topdown=False):
             for file in files:
                 file_path = os.path.join(root, file)
                 if file_path != target_json and file_path != layout_pdf_path:
@@ -165,35 +170,49 @@ def process_pdf_file_to_json(context, pdf_path: str):
                     context.log.info(f"删除文件: {file_path}")
             for dir in dirs:
                 dir_path = os.path.join(root, dir)
-                # 删除空文件夹
                 try:
                     os.rmdir(dir_path)
                     context.log.info(f"删除空文件夹: {dir_path}")
                 except OSError:
-                    # 目录非空，不删除
-                    pass                   
+                    pass
+
         if not target_json or not os.path.exists(target_json):
             raise FileNotFoundError("未找到 _content_list.json 文件")
 
-        # ✅ 读取 JSON 内容
         with open(target_json, "r", encoding="utf-8") as f:
             json_data1 = json.load(f)
 
-        # 打印 json_data1 看它的结构
         context.log.info(f"读取的 JSON 数据: {json_data1}")
 
-        # 返回 JSON 数据，确保结构符合数据库需要的格式
-        json_data = {
-    "file": pdf_path,
-    "content": [
-        {
-            "page": item.get("page_idx", -1),
-            "text": item.get("text", "")
-        }
-        for item in json_data1
-    ]
-}
+        # 处理并拼接 text 字段，带上 type
+        content_list = []
+        for item in json_data1:
+            page = item.get("page_idx", item.get("page", -1))
+            item_type = item.get("type", "unknown")
 
+            if item_type == "text":
+                text = item.get("text", "")
+            elif item_type == "table":
+                table_obj = {
+                    "table_caption": item.get("table_caption", []),
+                    "table_footnote": item.get("table_footnote", []),
+                    "table_body": item.get("table_body", "")
+                }
+                text = json.dumps(table_obj, ensure_ascii=False)
+            else:
+                # 你可以根据需求处理其他类型，暂时跳过
+                continue
+
+            content_list.append({
+                "page": page,
+                "text": text,
+                "type": item_type
+            })
+
+        json_data = {
+            "file": pdf_path,
+            "content": content_list
+        }
 
         context.log.info(f"提取 JSON 数据: {json_data}")
         return json_data
@@ -205,6 +224,7 @@ def process_pdf_file_to_json(context, pdf_path: str):
     except Exception as e:
         context.log.error(f"An error occurred: {e}")
         raise
+
 
 
 

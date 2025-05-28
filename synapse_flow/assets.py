@@ -15,8 +15,8 @@ print("asset启动")
 @asset
 def render_pdf_pages_with_boxes() -> list:
     """
-    将 PDF 每页转为图片，并在文本区域画红框，保存为 PNG。
-    输出每页图片的路径列表，供人工校对。
+    �? PDF 每页转为图片，并在文本区域画红框，保存为 PNG�?
+    输出每页图片的路径列表，供人工校对�?
     """
     if not PDF_FILE_PATH.exists():
         raise FileNotFoundError(f"找不到上传的 PDF 文件：{PDF_FILE_PATH}")
@@ -25,7 +25,7 @@ def render_pdf_pages_with_boxes() -> list:
     output_paths = []
 
     for i, page in enumerate(doc):
-        # 获取文本块位置
+        # 获取文本块位�?
         blocks = page.get_text("blocks")
 
         # 渲染为像素图
@@ -33,7 +33,7 @@ def render_pdf_pages_with_boxes() -> list:
         image_path = OUTPUT_IMAGE_DIR / f"page_{i+1}.png"
         pix.save(str(image_path))
 
-        # 打开为 PIL 图像以画框
+        # 打开�? PIL 图像以画�?
         img = Image.open(str(image_path)).convert("RGB")
         draw = ImageDraw.Draw(img)
         for block in blocks:

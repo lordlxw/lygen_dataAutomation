@@ -198,14 +198,14 @@ class PostgresIOManager(IOManager):
 
     def handle_output(self, context, obj: Any):
         data = obj
-
         run_id = context.step_context.run_id
 
-         # 根据type字段走不同分支
+        # 根据 type 字段走不同分支
         data_type = data.get("type")
         if data_type == "image":
-            self.handleInvoiceInfo(data, run_id)  # ✅ 正确调用类内部方法
-            return;
+            self.handleInvoiceInfo(data, run_id)  # 正确调用类内部方法
+            return
+
         context.log.info(f"handle_output!!!")
         context.log.info(context)
         context.log.info(obj)
@@ -213,26 +213,29 @@ class PostgresIOManager(IOManager):
         connection = psycopg2.connect(**self.db_params)
         cursor = connection.cursor()
         create_time = datetime.now()
-        print("handle_outputrunningId")
-        print(run_id)
+        context.log.info(f"handle_output run_id: {run_id}")
+
         # 用于记录每个 page 的 block_index 累加器
         page_block_counter = {}
 
-        for item in data['content']:
-            text = item['text']
-            page = item['page']
+        for item in data.get('content', []):
+            text = item.get('text', '')
+            item_type = item.get('type', '正文')  # 默认类型为 '正文'
+            page = item.get('page', 0)
             block_index = page_block_counter.get(page, 0)
 
             cursor.execute("""
                 INSERT INTO pdf_json (run_id, text, text_level, type, page_index, block_index, create_time, version)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (run_id, text, 1, '正文', page, block_index, create_time, 0))
+            """, (run_id, text, 1, item_type, page, block_index, create_time, 0))
 
             page_block_counter[page] = block_index + 1
 
         connection.commit()
         cursor.close()
         connection.close()
+
+
 
 
     def load_input(self, context) -> Any:
