@@ -146,7 +146,7 @@ def query_all_pdf_infos() -> list:
                 SELECT original_pdf_name, create_time, run_id
                 FROM pdf_info
                 ORDER BY create_time DESC
-                LIMIT 10
+                LIMIT 20
             """)
             rows = cur.fetchall()
             for row in rows:
@@ -181,7 +181,7 @@ def query_pdf_infos_by_user_id(user_id: str) -> list:
                 FROM pdf_info
                 WHERE user_id = %s
                 ORDER BY create_time DESC
-                LIMIT 10
+                LIMIT 20
             """, (user_id,))
             rows = cur.fetchall()
             for row in rows:

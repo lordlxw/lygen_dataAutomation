@@ -1,6 +1,8 @@
 # 忽略 uploads 文件夹
 uploaded_files/
 
+uploads/
+
 output/
 
 output_dir/
