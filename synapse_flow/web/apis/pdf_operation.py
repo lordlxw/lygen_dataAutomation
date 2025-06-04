@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from synapse_flow.web.utils.create_response import create_response
-from synapse_flow.web.services.pdf_operation_service import getAllPdfInfos
+from synapse_flow.web.services.pdf_operation_service import getAllPdfInfos,convert_pdf_to_images
 
 # 定义蓝图
 pdf_operation_bp = Blueprint('pdf_operation', __name__)
@@ -13,3 +13,19 @@ def get_tasks():
 
 
 
+# 路由：上传 PDF 并转换为图片
+@pdf_operation_bp.route('/convertPdfToImages', methods=['POST'])
+def convert_pdf_to_images_route():
+    if 'file' not in request.files:
+        return create_response(code="00001", message="未提供文件")
+
+    file = request.files['file']
+    if file.filename == '':
+        return create_response(code="00002", message="文件名为空")
+
+    result = convert_pdf_to_images(file.read())
+    return create_response(
+        code=result["code"],
+        message=result["message"],
+        data=result.get("value")
+    )

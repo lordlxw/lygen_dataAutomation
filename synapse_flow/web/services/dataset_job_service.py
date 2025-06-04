@@ -24,18 +24,21 @@ def insert_pdf_text_contents(run_id: str, contents: list, based_version: int = N
                 text_level = item.get("text_level", 0)
                 type_ = item.get("type", "")
                 block_index = item.get("block_index")
-                is_title_marked = item.get("is_title_marked", False)  # 默认 False
+                is_title_marked = item.get("is_title_marked", False)
+                exclude_from_finetune = item.get("exclude_from_finetune", False)
                 create_time = datetime.now()
 
                 cur.execute("""
                     INSERT INTO pdf_json (
                         run_id, text, page_index, text_level, create_time,
-                        version, type, block_index, based_version, is_title_marked
+                        version, type, block_index, based_version,
+                        is_title_marked, exclude_from_finetune
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     run_id, text, page_index, text_level, create_time,
-                    new_version, type_, block_index, based_version, is_title_marked
+                    new_version, type_, block_index, based_version,
+                    is_title_marked, exclude_from_finetune
                 ))
 
         conn.commit()
@@ -45,6 +48,7 @@ def insert_pdf_text_contents(run_id: str, contents: list, based_version: int = N
         raise e
     finally:
         conn.close()
+
 
 
 
@@ -62,7 +66,8 @@ def query_pdf_text_contents(run_id: str, version: int) -> list:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT id, run_id, text, page_index, text_level, create_time,
-                       version, type, block_index, is_title_marked, based_version
+                       version, type, block_index, is_title_marked,
+                       based_version, exclude_from_finetune
                 FROM pdf_json
                 WHERE run_id = %s AND version = %s
                 ORDER BY page_index ASC, block_index ASC
@@ -80,13 +85,14 @@ def query_pdf_text_contents(run_id: str, version: int) -> list:
                     "version": row[6],
                     "type": row[7],
                     "block_index": row[8],
-                    # 如果是 None，则改成 False
                     "is_title_marked": False if row[9] is None else row[9],
-                    "based_version": row[10]
+                    "based_version": row[10],
+                    "exclude_from_finetune": False if row[11] is None else row[11]
                 })
     finally:
         conn.close()
     return results
+
 
 
 
@@ -303,4 +309,52 @@ def update_user_id_by_run_id(run_id: str, new_user_id: str) -> bool:
         return False
     finally:
         conn.close()
+
+def get_based_version(run_id: str, version: int) -> int | None:
+    """
+    根据 run_id 和 version 查询对应的 based_version。
+    如果未找到记录，返回 None。
+    """
+    conn = get_pg_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT based_version 
+                FROM pdf_json 
+                WHERE run_id = %s AND version = %s
+                LIMIT 1
+            """, (run_id, version))
+            result = cur.fetchone()
+            if result:
+                return result[0]
+            else:
+                return None
+    finally:
+        conn.close()
+
+def get_version_chain(run_id: str, version: int) -> list[int]:
+    """
+    获取从基础版本0开始，直到传入版本的完整版本链。
+    例如：传入 version=5，链可能是 [0, 2, 4, 5]。
+    """
+    if version == 0:
+        return [0]
+
+    chain = []
+    current_version = int(version)
+
+    while current_version != 0:
+        chain.append(current_version)
+        based_version = get_based_version(run_id, current_version)
+        if based_version is None:
+            # 数据异常，跳出循环避免死循环
+            break
+        current_version = int(based_version)
+
+    # 最后加上基版本0
+    if 0 not in chain:
+        chain.append(0)
+
+    chain.reverse()
+    return chain
 

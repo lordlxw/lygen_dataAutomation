@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from synapse_flow.web.utils.create_response import create_response
-from synapse_flow.web.services.dataset_job_service import insert_pdf_text_contents,query_pdf_text_contents,query_versions_by_run_id,query_all_pdf_infos,insert_change_log,query_change_log,query_based_version,query_pdf_infos_by_user_id
+from synapse_flow.web.services.dataset_job_service import insert_pdf_text_contents,query_pdf_text_contents,query_versions_by_run_id,query_all_pdf_infos,insert_change_log,query_change_log,query_based_version,query_pdf_infos_by_user_id,get_version_chain
 
 dataset_job_bp = Blueprint('dataset_job', __name__)
 
@@ -219,3 +219,27 @@ def update_user_id_by_run_id_api():
             return create_response(data=None, message="更新失败", code="00002"), 500
     except Exception as e:
         return create_response(data=None, message=f"更新异常: {str(e)}", code="00002"), 500
+
+
+
+# 获取版本链
+@dataset_job_bp.route('/getVersionChain', methods=['POST'])
+def get_version_chain_route():
+    body = request.get_json()
+    if not body or not isinstance(body, dict):
+        return create_response(data=None, message="请求体必须是一个JSON对象", code="00001"), 400
+
+    run_id = body.get("run_id")
+    version = body.get("version")
+
+    if run_id is None:
+        return create_response(data=None, message="缺少 run_id", code="00001"), 400
+    if version is None:
+        return create_response(data=None, message="缺少 version", code="00001"), 400
+
+    try:
+        version_chain = get_version_chain(run_id, version)
+        return create_response(data={"version_chain": version_chain}, message="查询成功", code="00000")
+    except Exception as e:
+        return create_response(data=None, message=f"查询失败: {str(e)}", code="00002"), 500
+
