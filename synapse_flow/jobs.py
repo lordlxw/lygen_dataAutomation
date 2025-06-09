@@ -21,8 +21,8 @@ def check_pdf_size(context, pdf_path: str,task_id: int) -> str:
     try:
         context.log.info(f"PDF 大小: {size_mb:.2f}MB")
 
-        if size_mb > 200:
-            raise Exception(f"PDF 文件过大：{size_mb:.2f}MB，不能超过 200MB，路径：{pdf_path}")
+        if size_mb > 500:
+            raise Exception(f"PDF 文件过大：{size_mb:.2f}MB，不能超过 500MB，路径：{pdf_path}")
 
         # ✅ 正常情况下插入日志：状态 success
         insert_job_detail(job_run_id, job_name, custom_id,task_id)

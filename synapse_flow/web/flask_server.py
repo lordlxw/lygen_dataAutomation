@@ -81,7 +81,7 @@ UPLOAD_PATH.mkdir(exist_ok=True)
 dagster_instance = DagsterInstance.get()  # 使用全局持久化实例
 
 # 最大文件大小限制（单位：字节）
-app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 200MB
 
 # @app.route('/upload', methods=['POST'])
 # def upload_pdf():
