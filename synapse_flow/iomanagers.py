@@ -225,9 +225,9 @@ class PostgresIOManager(IOManager):
             block_index = page_block_counter.get(page, 0)
 
             cursor.execute("""
-                INSERT INTO pdf_json (run_id, text, text_level, type, page_index, block_index, create_time, version)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (run_id, text, 1, item_type, page, block_index, create_time, 0))
+                INSERT INTO pdf_json (run_id, text, text_level, type, page_index, block_index, create_time, version, original_text)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (run_id, text, 1, item_type, page, block_index, create_time, 0, text))
 
             page_block_counter[page] = block_index + 1
 

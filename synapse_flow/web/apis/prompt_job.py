@@ -1,6 +1,6 @@
 from flask import Blueprint, request
 from synapse_flow.web.utils.create_response import create_response
-from synapse_flow.web.services.prompt_job_service import split_text,get_api_key
+from synapse_flow.web.services.prompt_job_service import split_text,get_api_key,process_qa_for_version_0
 from synapse_flow.promptJob import promptJobPipeLine  # 确保导入正确
 # 定义蓝图
 prompt_job_bp = Blueprint('prompt_job', __name__)
@@ -27,13 +27,59 @@ def text_split():
     return "success"
 
 
-@prompt_job_bp.route('/getApiKey', methods=['POST'])  # /task 路径
-def get_latest_api_key():
+
+
+@prompt_job_bp.route('/processQA', methods=['POST'])
+def process_qa():
+    """
+    对版本0的数据进行QA问答对处理，生成版本1
+    ---
+    consumes:
+      - application/json
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            run_id:
+              type: string
+              description: 要处理的run_id
+              example: "abc123-def456-ghi789"
+    responses:
+      200:
+        description: 成功执行QA问答对处理
+      400:
+        description: 参数错误
+      500:
+        description: 服务器内部错误
+    """
     try:
-        result = get_api_key()
-        return create_response(data=result, message="apiKey获取成功", code="00000")
+        data = request.get_json()
+        if not data:
+            return create_response(data=None, message="缺少请求数据", code="00001"), 400
+        
+        run_id = data.get("run_id")
+        if not run_id:
+            return create_response(data=None, message="缺少run_id参数", code="00001"), 400
+        
+        print(f"开始处理QA问答对，run_id: {run_id}")
+        
+        # 调用服务层处理QA问答对
+        result = process_qa_for_version_0(run_id)
+        
+        return create_response(
+            data=result,
+            message="QA问答对处理完成",
+            code="00000"
+        )
+        
     except Exception as e:
-        # 可以打印日志或者使用 logging 模块
-        print(f"Error in get_latest_api_key: {e}")
-        return create_response(data=None, message=f"获取apiKey失败：{str(e)}", code="99999")
+        print(f"QA问答对处理失败: {str(e)}")
+        return create_response(
+            data=None,
+            message=f"QA问答对处理失败: {str(e)}",
+            code="00002"
+        ), 500
 
