@@ -137,6 +137,10 @@ def process_pdf_file_to_json(context, pdf_path: str):
         context.log.info(f"Running command: {' '.join(command)}")
 
         result = subprocess.run(command, capture_output=True, text=True)
+        context.log.info(f"magic-pdf stdout: {result.stdout}")
+        context.log.info(f"magic-pdf stderr: {result.stderr}")
+        context.log.info(f"magic-pdf return code: {result.returncode}")
+        
         if result.returncode != 0:
             context.log.error(f"Error running magic-pdf: {result.stderr}")
             raise Exception(f"magic-pdf failed: {result.stderr}")
@@ -148,7 +152,13 @@ def process_pdf_file_to_json(context, pdf_path: str):
         target_json = None
         layout_pdf_path = None
 
+        # 列出输出目录中的所有文件
+        context.log.info(f"输出目录 {output_dir} 中的所有文件:")
         for root, dirs, files in os.walk(output_dir):
+            context.log.info(f"目录: {root}")
+            context.log.info(f"子目录: {dirs}")
+            context.log.info(f"文件: {files}")
+            
             for file in files:
                 if file.endswith("_content_list.json"):
                     target_json = os.path.join(root, file)
@@ -157,9 +167,6 @@ def process_pdf_file_to_json(context, pdf_path: str):
                     layout_pdf_path = os.path.join(root, file)
                     context.log.info(f"找到 _layout PDF 文件: {layout_pdf_path}")
                     insert_pdf_info(run_id, layout_pdf_path, pdf_name_without_ext)
-                    break
-            if target_json and layout_pdf_path:
-                break
 
         # 清理无关文件
         for root, dirs, files in os.walk(output_dir, topdown=False):

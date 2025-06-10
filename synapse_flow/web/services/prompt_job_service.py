@@ -8,6 +8,72 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 from synapse_flow.web.services.dataset_job_service import query_pdf_text_contents, insert_pdf_text_contents
 import re
+from multiprocessing import Process, Manager
+from tqdm import tqdm
+import traceback
+import subprocess
+
+# CUDA内存分配策略
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
+# 使用8张卡
+NUM_GPUS = 8
+gpu_ids = [0, 1, 2, 3, 4, 5, 6, 7]
+
+def clear_all_gpu_memory():
+    """清理所有GPU的内存"""
+    print("开始清理所有GPU内存...")
+    for gpu_id in range(8):
+        try:
+            torch.cuda.set_device(gpu_id)
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            
+            # 显示清理后的内存状态
+            memory_info = torch.cuda.get_device_properties(gpu_id)
+            total_memory = memory_info.total_memory / (1024**3)  # GB
+            allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
+            free_memory = total_memory - allocated
+            
+            print(f"GPU {gpu_id}: 清理后 - 总内存 {total_memory:.1f}GB, 已分配 {allocated:.1f}GB, 可用 {free_memory:.1f}GB")
+            
+        except Exception as e:
+            print(f"清理GPU {gpu_id} 内存时出错: {e}")
+
+def force_clear_gpu_memory(gpu_id):
+    """强制清理指定GPU的内存"""
+    try:
+        torch.cuda.set_device(gpu_id)
+        
+        # 尝试释放所有缓存
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+        
+        # 如果内存仍然被占用，尝试重置设备
+        allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
+        if allocated > 10:  # 如果还有超过10GB被占用
+            print(f"GPU {gpu_id} 内存仍被占用 {allocated:.1f}GB，尝试重置...")
+            # 注意：这会中断当前在该GPU上的所有操作
+            torch.cuda.reset_peak_memory_stats(gpu_id)
+        
+        print(f"GPU {gpu_id} 内存清理完成")
+        
+    except Exception as e:
+        print(f"强制清理GPU {gpu_id} 内存时出错: {e}")
+
+def system_clear_gpu_memory():
+    """使用系统命令清理GPU内存（需要root权限）"""
+    try:
+        print("尝试使用系统命令清理GPU内存...")
+        # 使用nvidia-smi重置GPU
+        result = subprocess.run(['nvidia-smi', '--gpu-reset'], 
+                              capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            print("✅ 系统级GPU内存清理成功")
+        else:
+            print(f"⚠️ 系统级GPU内存清理失败: {result.stderr}")
+    except Exception as e:
+        print(f"系统级GPU内存清理出错: {e}")
 
 # 获取所有任务
 def split_text():
@@ -54,59 +120,6 @@ def get_api_key(key_name="openai"):
             cursor.close()
         if conn:
             conn.close()
-
-# 全局模型变量
-_model = None
-_tokenizer = None
-
-def load_model():
-    """加载本地训练模型"""
-    global _model, _tokenizer
-    
-    if _model is not None and _tokenizer is not None:
-        return _model, _tokenizer
-    
-    try:
-        print("开始加载本地训练模型...")
-        
-        # 模型路径配置 - 请根据实际情况修改
-        base_model_path = "/data/training/model/Meta-Llama-3.1-8B-Instruct"
-        lora_path = "/data/training/llama3.1_8b_checkpoint/20250604/checkpoint-1005"
-        
-        # CUDA内存分配策略
-        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
-        
-        # 加载tokenizer
-        _tokenizer = AutoTokenizer.from_pretrained(
-            base_model_path,
-            trust_remote_code=True
-        )
-        if _tokenizer.pad_token is None:
-            _tokenizer.pad_token = _tokenizer.eos_token
-
-        # 加载基础模型
-        base_model = AutoModelForCausalLM.from_pretrained(
-            base_model_path,
-            device_map='auto',  # 自动分配设备
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True,
-            low_cpu_mem_usage=True
-        ).eval()
-
-        # 加载LoRA模型
-        _model = PeftModel.from_pretrained(
-            base_model,
-            model_id=lora_path,
-            device_map='auto'
-        )
-        _model.eval()
-        
-        print("✅ 本地训练模型加载完成")
-        return _model, _tokenizer
-        
-    except Exception as e:
-        print(f"❌ 模型加载失败: {str(e)}")
-        raise
 
 def build_prompt(instruction, input_data):
     """构建prompt，使用你的instruction模板"""
@@ -225,9 +238,187 @@ def build_prompt(instruction, input_data):
     
     return instruction_template, prompt
 
+def process_batch(model, tokenizer, batch_data, gpu_id):
+    """处理一批数据"""
+    results = []
+    
+    for item_data in batch_data:
+        try:
+            current_item = item_data["item"]
+            context_data = item_data["context_data"]
+            instruction = item_data["instruction"]
+            
+            # 构建prompt
+            system_prompt, user_prompt = build_prompt(instruction, context_data)
+            
+            # 构建消息格式
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+            
+            # 使用tokenizer应用chat模板
+            text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            
+            # 编码输入
+            inputs = tokenizer(
+                text,
+                return_tensors="pt",
+                truncation=True,
+                max_length=4096,
+                padding=True
+            ).to(f"cuda:{gpu_id}")
+            
+            # 生成回答
+            with torch.no_grad():
+                output = model.generate(
+                    **inputs,
+                    max_new_tokens=2000,
+                    do_sample=False,
+                    num_beams=1
+                )
+            
+            # 解码输出
+            decoded = tokenizer.decode(output[0], skip_special_tokens=True)
+            ai_response = decoded.split("assistant")[-1].strip()
+            
+            # 清理内存
+            del inputs, output
+            torch.cuda.empty_cache()
+            
+            results.append({
+                "index": item_data["index"],
+                "ai_response": ai_response,
+                "current_text": current_item.get("text", ""),
+                "item": current_item
+            })
+            
+        except Exception as e:
+            print(f"GPU {gpu_id} 处理数据时出错 (index: {item_data['index']}): {str(e)}")
+            results.append({
+                "index": item_data["index"],
+                "ai_response": "",
+                "current_text": current_item.get("text", ""),
+                "item": current_item
+            })
+    
+    return results
+
+def run_worker(gpu_id, data_to_process, return_dict):
+    """GPU工作进程"""
+    try:
+        # 强制清理GPU内存
+        force_clear_gpu_memory(gpu_id)
+        
+        torch.cuda.set_device(gpu_id)
+        torch.cuda.empty_cache()
+        
+        # 检查GPU内存状态
+        memory_info = torch.cuda.get_device_properties(gpu_id)
+        total_memory = memory_info.total_memory / (1024**3)  # GB
+        allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
+        free_memory = total_memory - allocated
+        
+        print(f"GPU {gpu_id}: 总内存 {total_memory:.1f}GB, 已分配 {allocated:.1f}GB, 可用 {free_memory:.1f}GB")
+        
+        # 如果可用内存小于15GB，尝试强制清理
+        if free_memory < 15:
+            print(f"⚠️ GPU {gpu_id} 内存不足，尝试强制清理...")
+            force_clear_gpu_memory(gpu_id)
+            
+            # 重新检查内存
+            allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
+            free_memory = total_memory - allocated
+            print(f"GPU {gpu_id}: 强制清理后 - 可用 {free_memory:.1f}GB")
+            
+            # 如果仍然不足，跳过这个GPU
+            if free_memory < 15:
+                print(f"❌ GPU {gpu_id} 内存仍然不足，跳过处理")
+                return_dict[gpu_id] = []
+                return
+        
+        print(f"GPU {gpu_id}: 开始加载模型...")
+
+        # 模型路径配置
+        base_model_path = "/data/training/model/Meta-Llama-3.1-8B-Instruct"
+        lora_path = "/data/training/llama3.1_8b_checkpoint/20250604/checkpoint-1005"
+
+        # 加载tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(
+            base_model_path,
+            trust_remote_code=True
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+
+        # 加载基础模型，使用更保守的内存设置
+        base_model = AutoModelForCausalLM.from_pretrained(
+            base_model_path,
+            device_map={'': gpu_id},
+            torch_dtype=torch.bfloat16,
+            trust_remote_code=True,
+            low_cpu_mem_usage=True,
+            max_memory={gpu_id: f"{int(free_memory * 0.7)}GB"}  # 只使用70%的可用内存
+        ).eval()
+
+        # 加载LoRA模型
+        model = PeftModel.from_pretrained(
+            base_model,
+            model_id=lora_path,
+            device_map={'': gpu_id}
+        )
+        model.eval()
+        print(f"GPU {gpu_id}: 模型加载完成")
+
+        # 获取分配给当前GPU的数据
+        gpu_data = data_to_process[gpu_id::NUM_GPUS]
+        total_items = len(gpu_data)
+        print(f"GPU {gpu_id}: 开始处理 {total_items} 条数据")
+
+        batch_size = 1
+        results = []
+        
+        for i in range(0, total_items, batch_size):
+            try:
+                batch = gpu_data[i:i+batch_size]
+                batch_results = process_batch(model, tokenizer, batch, gpu_id)
+                results.extend(batch_results)
+                
+                progress = (i + batch_size) / total_items * 100
+                print(f"GPU {gpu_id}: 进度 {progress:.2f}% ({i + batch_size}/{total_items})")
+                
+                # 每处理3个批次就清理一次内存
+                if i % 3 == 0:
+                    torch.cuda.empty_cache()
+                    
+            except torch.cuda.OutOfMemoryError as e:
+                print(f"❌ GPU {gpu_id} 内存不足，停止处理: {e}")
+                # 清理内存并继续处理剩余数据
+                torch.cuda.empty_cache()
+                continue
+            except Exception as e:
+                print(f"❌ GPU {gpu_id} 处理批次时出错: {e}")
+                continue
+
+        return_dict[gpu_id] = results
+        print(f"✅ GPU {gpu_id} 完成任务，处理 {len(results)} 条")
+        
+    except Exception as e:
+        print(f"❌ GPU {gpu_id} 执行出错：{str(e)}")
+        traceback.print_exc()
+        return_dict[gpu_id] = []
+    finally:
+        if 'model' in locals():
+            del model
+        if 'base_model' in locals():
+            del base_model
+        if 'tokenizer' in locals():
+            del tokenizer
+        torch.cuda.empty_cache()
+
 def process_qa_for_version_0(run_id: str) -> dict:
     """
-    对版本0的数据进行QA问答对处理，生成版本1
+    对版本0的数据进行QA问答对处理，生成版本1 - 异步多GPU版本
     
     Args:
         run_id (str): 运行ID
@@ -238,6 +429,27 @@ def process_qa_for_version_0(run_id: str) -> dict:
     try:
         print(f"开始处理QA问答对，run_id: {run_id}")
         
+        # 启动前清理所有GPU内存
+        print("启动前清理所有GPU内存...")
+        clear_all_gpu_memory()
+        
+        # 如果GPU内存仍然被占用，尝试系统级清理
+        print("检查GPU内存状态...")
+        total_allocated = 0
+        for gpu_id in range(8):
+            try:
+                torch.cuda.set_device(gpu_id)
+                allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
+                total_allocated += allocated
+            except:
+                pass
+        
+        if total_allocated > 100:  # 如果总占用超过100GB
+            print(f"GPU内存总占用 {total_allocated:.1f}GB，尝试系统级清理...")
+            system_clear_gpu_memory()
+            # 再次清理
+            clear_all_gpu_memory()
+        
         # 1. 获取版本0的数据
         version_0_data = query_pdf_text_contents(run_id, 0)
         
@@ -246,18 +458,14 @@ def process_qa_for_version_0(run_id: str) -> dict:
         
         print(f"获取到版本0数据，共 {len(version_0_data)} 条记录")
         
-        # 2. 加载本地训练模型
-        model, tokenizer = load_model()
-        
-        # 3. 按原始顺序处理所有数据
-        processed_data = []
-        text_processed_count = 0  # 只统计text类型的处理数量
-        ai_analysis_results = []  # 存储AI分析结果
+        # 2. 按原始顺序处理所有数据，准备多GPU处理
+        data_to_process = []
+        text_processed_count = 0
         
         # 按page_index和block_index排序，保持原始顺序
         sorted_data = sorted(version_0_data, key=lambda x: (x.get("page_index", 0), x.get("block_index", 0)))
         
-        print(f"开始处理 {len(sorted_data)} 条数据，按页面和块索引排序")
+        print(f"开始准备 {len(sorted_data)} 条数据，按页面和块索引排序")
         
         for i, current_item in enumerate(sorted_data):
             item_type = current_item.get("type", "正文")
@@ -303,103 +511,89 @@ def process_qa_for_version_0(run_id: str) -> dict:
                 # 构建instruction
                 instruction = "请问第三文本块是否为新的层级？另外，内容是否正确，如果错误应该建议如何修改?"
                 
-                try:
-                    # 构建prompt
-                    system_prompt, user_prompt = build_prompt(instruction, context_data)
-                    
-                    # 构建消息格式
-                    messages = [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                    ]
-                    
-                    # 使用tokenizer应用chat模板
-                    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-                    
-                    # 编码输入
-                    inputs = tokenizer(
-                        text,
-                        return_tensors="pt",
-                        truncation=True,
-                        max_length=4096,
-                        padding=True
-                    )
-                    
-                    # 生成回答
-                    with torch.no_grad():
-                        output = model.generate(
-                            **inputs,
-                            max_new_tokens=2000,
-                            do_sample=False,
-                            num_beams=1
-                        )
-                    
-                    # 解码输出
-                    decoded = tokenizer.decode(output[0], skip_special_tokens=True)
-                    ai_response = decoded.split("assistant")[-1].strip()
-                    
-                    # 清理内存
-                    del inputs, output
-                    torch.cuda.empty_cache()
-                    
-                    # 存储AI分析结果
-                    ai_analysis_results.append({
-                        "index": i,
-                        "ai_response": ai_response,
-                        "current_text": current_item.get("text", ""),
-                        "item": current_item
-                    })
-                    
-                    # 添加延迟避免GPU过载
-                    time.sleep(0.05)
-                    
-                except Exception as e:
-                    print(f"处理文本块时出错: {str(e)}")
-                    # 如果处理失败，存储空的分析结果
-                    ai_analysis_results.append({
-                        "index": i,
-                        "ai_response": "",
-                        "current_text": current_item.get("text", ""),
-                        "item": current_item
-                    })
-            else:
-                # 对于非text类型（如table），原封不动保留
-                ai_analysis_results.append({
+                # 添加到处理队列
+                data_to_process.append({
                     "index": i,
-                    "ai_response": "",
-                    "current_text": current_item.get("text", ""),
-                    "item": current_item
+                    "item": current_item,
+                    "context_data": context_data,
+                    "instruction": instruction
+                })
+            else:
+                # 对于非text类型（如table），添加到处理队列但标记为空处理
+                data_to_process.append({
+                    "index": i,
+                    "item": current_item,
+                    "context_data": [],
+                    "instruction": ""
                 })
         
-        # 4. 根据AI分析结果调整数据
+        print(f"准备完成，共 {len(data_to_process)} 条数据待处理（其中 {text_processed_count} 条text类型）")
+        
+        # 3. 启动多GPU并行处理
+        from torch.multiprocessing import set_start_method
+        try:
+            set_start_method('spawn', force=True)
+        except RuntimeError:
+            pass
+
+        manager = Manager()
+        return_dict = manager.dict()
+        processes = []
+
+        print(f"启动 {NUM_GPUS} 个GPU进程...")
+        for idx, gpu_id in enumerate(gpu_ids):
+            p = Process(target=run_worker, args=(gpu_id, data_to_process, return_dict))
+            p.start()
+            processes.append(p)
+            time.sleep(2)  # 避免同时启动造成资源竞争
+
+        # 等待所有进程完成
+        for p in processes:
+            p.join()
+
+        # 4. 收集所有GPU的处理结果
+        all_results = []
+        for gpu_id in gpu_ids:
+            if gpu_id in return_dict:
+                all_results.extend(return_dict[gpu_id])
+            else:
+                print(f"⚠️ GPU {gpu_id} 没有返回结果，已跳过。")
+
+        # 按原始索引排序
+        all_results.sort(key=lambda x: x["index"])
+        
+        print(f"多GPU处理完成，共收集到 {len(all_results)} 条结果")
+        
+        # 5. 根据AI分析结果调整数据
         print("根据AI分析结果调整数据...")
         
         # 先处理向前合并的情况
-        for i, analysis in enumerate(ai_analysis_results):
+        for i, analysis in enumerate(all_results):
             ai_response = analysis["ai_response"]
             if "{向前合并}" in ai_response and "{删除}" in ai_response:
                 # 找到上一个非空文本
                 prev_index = i - 1
-                while prev_index >= 0 and not ai_analysis_results[prev_index].get("current_text", "").strip():
+                while prev_index >= 0 and not all_results[prev_index].get("current_text", "").strip():
                     prev_index -= 1
                 
                 if prev_index >= 0:
                     # 拼接文本到上一个数据项
-                    prev_text = ai_analysis_results[prev_index].get("current_text", "")
+                    prev_text = all_results[prev_index].get("current_text", "")
                     current_text = analysis["current_text"]
-                    ai_analysis_results[prev_index]["current_text"] = prev_text + current_text
+                    all_results[prev_index]["current_text"] = prev_text + current_text
                     # 当前文本置空
-                    ai_analysis_results[i]["current_text"] = ""
+                    all_results[i]["current_text"] = ""
         
         # 然后构建最终的处理数据
-        for i, analysis in enumerate(ai_analysis_results):
+        processed_data = []
+        for i, analysis in enumerate(all_results):
             current_item = analysis["item"]
             ai_response = analysis["ai_response"]
             current_text = analysis["current_text"]  # 使用可能已经调整过的文本
             
             if ai_response:  # 有AI分析结果
                 # 解析remark并调整数据
-                adjusted_item = parse_remark_and_adjust_data(ai_response, current_text, i, ai_analysis_results)
+                adjusted_item = parse_remark_and_adjust_data(ai_response, current_text, i, all_results)
                 
                 # 构建处理后的数据项
                 processed_item = {
@@ -431,7 +625,7 @@ def process_qa_for_version_0(run_id: str) -> dict:
         
         print(f"QA问答对处理完成，共处理 {len(processed_data)} 条记录（其中 {text_processed_count} 条text类型）")
         
-        # 5. 保存为版本1，基于版本0
+        # 6. 保存为版本1，基于版本0
         new_version = insert_pdf_text_contents(run_id, processed_data, based_version=0)
         
         print(f"版本1数据保存成功，新版本号: {new_version}")
