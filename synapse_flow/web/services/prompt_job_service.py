@@ -1,130 +1,395 @@
 # 针对指示词封装的service，凯铭用
 from synapse_flow.db import get_pg_conn
-import torch
 import json
 import time
 import os
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from peft import PeftModel
+import requests
+import subprocess
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from synapse_flow.web.services.dataset_job_service import query_pdf_text_contents, insert_pdf_text_contents
 import re
-from multiprocessing import Process, Manager
-from tqdm import tqdm
 import traceback
-import subprocess
 
-# CUDA内存分配策略
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+# 配置参数
+BASE_MODEL_PATH = "/data/training/model/Meta-Llama-3.1-8B-Instruct"
+LORA_PATH = "/data/training/llama3.1_8b_checkpoint/20250604/checkpoint-1005"
 
-# 使用8张卡
-NUM_GPUS = 8
-gpu_ids = [0, 1, 2, 3, 4, 5, 6, 7]
+# vLLM服务配置 - 使用8张显卡
+VLLM_SERVICE = {
+    "port": 8201,
+    "container_name": "vllm"
+}
 
-def clear_all_gpu_memory():
-    """清理所有GPU的内存"""
-    print("开始清理所有GPU内存...")
-    for gpu_id in range(8):
+def start_vllm_service():
+    """启动vLLM服务"""
+    print("开始启动vLLM服务...")
+    
+    # 检查服务是否已经运行
+    try:
+        response = requests.get(f"http://localhost:{VLLM_SERVICE['port']}/health", timeout=5)
+        if response.status_code == 200:
+            print(f"✅ vLLM服务已在端口 {VLLM_SERVICE['port']} 运行")
+            return True
+    except:
+        pass
+    
+    # 停止可能存在的旧服务
+    try:
+        subprocess.run(["docker", "stop", VLLM_SERVICE["container_name"]], capture_output=True)
+        # subprocess.run(["docker", "rm", VLLM_SERVICE["container_name"]], capture_output=True)
+        print(f"✅ 停止旧服务 {VLLM_SERVICE['container_name']}")
+    except:
+        pass
+    
+    # 启动新的vLLM服务
+    cmd = [
+        "docker", "run",
+        "--gpus", "all",
+        "-v", "/data/.cache/vllm:/root/.cache/vllm",
+        "-v", "/data/.cache/huggingface:/root/.cache/huggingface",
+        "-v", "/data/training/model:/root/model",
+        "-v", "/data/training/llama3.1_8b_checkpoint:/root/lora",
+        f"-p", f"{VLLM_SERVICE['port']}:8000",
+        "--ipc=host",
+        "-d",
+        f"--name", VLLM_SERVICE["container_name"],
+        "vllm/vllm-openai:latest",
+        "--enable-lora",
+        f"--lora-modules", f"llama3.1_8b=/root/lora/20250604/checkpoint-1005",
+        "--model", "/root/model/Meta-Llama-3.1-8B-Instruct",
+        "--tensor-parallel-size", "8"
+    ]
+    
+    try:
+        print(f"启动vLLM服务，端口: {VLLM_SERVICE['port']}, 使用所有GPU")
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        
+        if result.returncode == 0:
+            print(f"✅ vLLM服务启动成功，端口: {VLLM_SERVICE['port']}")
+            # 等待服务启动
+            time.sleep(30)
+            return True
+        else:
+            print(f"❌ vLLM服务启动失败，端口: {VLLM_SERVICE['port']}, 错误: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ 启动vLLM服务出错，端口: {VLLM_SERVICE['port']}, 错误: {str(e)}")
+        return False
+
+def stop_vllm_service():
+    """停止vLLM服务"""
+    print("停止vLLM服务...")
+    
+    try:
+        # 停止并删除容器
+        subprocess.run(["docker", "stop", VLLM_SERVICE["container_name"]], capture_output=True)
+        subprocess.run(["docker", "rm", VLLM_SERVICE["container_name"]], capture_output=True)
+        print(f"✅ 停止vLLM服务，端口: {VLLM_SERVICE['port']}")
+    except Exception as e:
+        print(f"⚠️ 停止vLLM服务出错，端口: {VLLM_SERVICE['port']}, 错误: {str(e)}")
+
+def check_vllm_service_health():
+    """检查vLLM服务健康状态"""
+    try:
+        response = requests.get(f"http://localhost:{VLLM_SERVICE['port']}/health", timeout=10)
+        return response.status_code == 200
+    except:
+        return False
+
+def verify_lora_model_loaded():
+    """验证LoRA模型是否正确加载"""
+    try:
+        print("验证LoRA模型加载状态...")
+        response = requests.get(f"http://localhost:{VLLM_SERVICE['port']}/v1/models", timeout=10)
+        
+        if response.status_code == 200:
+            models_data = response.json()
+            available_models = [model.get('id', '') for model in models_data.get('data', [])]
+            print(f"可用模型列表: {available_models}")
+            
+            lora_model_name = "llama3.1_8b"
+            if lora_model_name in available_models:
+                print(f"✅ LoRA模型 '{lora_model_name}' 已正确加载")
+                return True
+            else:
+                print(f"❌ LoRA模型 '{lora_model_name}' 未找到")
+                print(f"⚠️ 当前可用模型: {available_models}")
+                return False
+        else:
+            print(f"❌ 无法获取模型列表，状态码: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ 验证LoRA模型时出错: {str(e)}")
+        return False
+
+import asyncio
+import aiohttp
+from concurrent.futures import ThreadPoolExecutor
+import json
+
+async def call_vllm_api_async(messages, max_tokens=2000, session=None):
+    """异步调用vLLM API"""
+    url = f"http://localhost:{VLLM_SERVICE['port']}/v1/chat/completions"
+    
+    # 首先获取可用的模型列表
+    try:
+        async with session.get(f"http://localhost:{VLLM_SERVICE['port']}/v1/models", timeout=10) as response:
+            if response.status == 200:
+                models_data = await response.json()
+                available_models = [model.get('id', '') for model in models_data.get('data', [])]
+                print(f"可用模型列表: {available_models}")
+                
+                # 优先使用 LoRA 模型
+                lora_model_name = "llama3.1_8b"
+                if lora_model_name in available_models:
+                    model_name = lora_model_name
+                    print(f"✅ 使用 LoRA 模型: {model_name}")
+                elif available_models:
+                    model_name = available_models[0]
+                    print(f"⚠️ LoRA 模型未找到，使用第一个可用模型: {model_name}")
+                else:
+                    model_name = "llama3.1_8b"
+                    print(f"⚠️ 未找到可用模型，使用默认模型: {model_name}")
+            else:
+                model_name = "llama3.1_8b"
+                print(f"⚠️ 获取模型列表失败，使用默认模型: {model_name}")
+    except Exception as e:
+        model_name = "llama3.1_8b"
+        print(f"⚠️ 获取模型列表出错: {str(e)}，使用默认模型: {model_name}")
+    
+    payload = {
+        "model": model_name,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "stream": False
+    }
+    
+    try:
+        async with session.post(url, json=payload, timeout=300) as response:
+            if response.status == 200:
+                result = await response.json()
+                return result["choices"][0]["message"]["content"]
+            else:
+                error_text = await response.text()
+                print(f"❌ API调用失败，状态码: {response.status}, 错误: {error_text[:200]}")
+                return ""
+    except Exception as e:
+        print(f"❌ 异步API调用出错: {str(e)}")
+        return ""
+
+def call_vllm_api(messages, max_tokens=2000):
+    """同步调用vLLM API（保持向后兼容）"""
+    url = f"http://localhost:{VLLM_SERVICE['port']}/v1/chat/completions"
+    
+    # 首先获取可用的模型列表
+    try:
+        response = requests.get(f"http://localhost:{VLLM_SERVICE['port']}/v1/models", timeout=10)
+        if response.status_code == 200:
+            models_data = response.json()
+            available_models = [model.get('id', '') for model in models_data.get('data', [])]
+            print(f"可用模型列表: {available_models}")
+            
+            # 优先使用 LoRA 模型
+            lora_model_name = "llama3.1_8b"
+            if lora_model_name in available_models:
+                model_name = lora_model_name
+                print(f"✅ 使用 LoRA 模型: {model_name}")
+            elif available_models:
+                model_name = available_models[0]
+                print(f"⚠️ LoRA 模型未找到，使用第一个可用模型: {model_name}")
+            else:
+                model_name = "llama3.1_8b"
+                print(f"⚠️ 未找到可用模型，使用默认模型: {model_name}")
+        else:
+            model_name = "llama3.1_8b"
+            print(f"⚠️ 获取模型列表失败，使用默认模型: {model_name}")
+    except Exception as e:
+        model_name = "llama3.1_8b"
+        print(f"⚠️ 获取模型列表出错: {str(e)}，使用默认模型: {model_name}")
+    
+    payload = {
+        "model": model_name,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": 0.0,
+        "stream": False
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=300)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        else:
+            print(f"❌ API调用失败，状态码: {response.status_code}")
+            print(f"错误信息: {response.text[:200]}")  # 只显示前200个字符
+            return ""
+                
+    except Exception as e:
+        print(f"❌ API调用出错: {str(e)}")
+        return ""
+
+async def process_single_item(item_data, session, semaphore):
+    """处理单个数据项的协程"""
+    current_item = item_data["item"]
+    context_data = item_data["context_data"]
+    instruction = item_data["instruction"]
+    original_index = item_data["index"]
+    
+    if not instruction:
+        return {
+            "index": original_index, "ai_response": "",
+            "current_text": current_item.get("text", ""), "item": current_item
+        }
+
+    # 在任务内部构建 prompt 和 messages，确保数据隔离
+    system_prompt, user_prompt = build_prompt(instruction, context_data)
+    
+    print(f"\n=== 处理数据 index: {original_index} ===")
+    print(f"System Prompt: {system_prompt}")
+    print(f"User Prompt: {user_prompt}")
+    
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    async with semaphore:
+        ai_response = await call_vllm_api_async(messages, session=session)
+        return {
+            "index": original_index, "ai_response": ai_response,
+            "current_text": current_item.get("text", ""), "item": current_item
+        }
+
+async def process_batch_with_vllm_async(batch_data):
+    """异步使用vLLM处理一批数据 (已修正)"""
+    results = []
+
+    # 创建信号量控制并发量 - 减少到64，避免8张显卡负载过重
+    semaphore = asyncio.Semaphore(64)
+
+    async with aiohttp.ClientSession() as session:
+        # 修正之处：直接创建任务，并通过参数传递独立的数据 item_data
+        tasks = [
+            asyncio.create_task(process_single_item(item_data, session, semaphore))
+            for item_data in batch_data
+        ]
+        
+        print(f"开始并发处理 {len(tasks)} 个任务，并发限制: 64...")
+        
+        completed_tasks = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # 按原始索引排序结果
+        temp_results = []
+        for i, result in enumerate(completed_tasks):
+            if isinstance(result, Exception):
+                print(f"处理数据时出错 (index: {batch_data[i]['index']}): {str(result)}")
+                temp_results.append({
+                    "index": batch_data[i]["index"],
+                    "ai_response": "",
+                    "current_text": batch_data[i]["item"].get("text", ""),
+                    "item": batch_data[i]["item"]
+                })
+            else:
+                original_index, ai_response = result
+                # 打印输出结果
+                print(f"\n=== 输出结果 index: {original_index} ===")
+                print(f"AI Response: {ai_response}")
+                print(f"Current Text: {batch_data[i]['item'].get('text', '')}")
+                print("=" * 50)
+                
+                temp_results.append({
+                    "index": original_index,
+                    "ai_response": ai_response,
+                    "current_text": batch_data[i]["item"].get("text", ""),
+                    "item": batch_data[i]["item"]
+                })
+        
+        # 按原始索引排序
+        temp_results.sort(key=lambda x: x["index"])
+        results.extend(temp_results)
+    
+    return results
+
+def process_batch_with_vllm(batch_data):
+    """使用vLLM处理一批数据（支持异步并发）"""
+    # 使用异步处理
+    try:
+        return asyncio.run(process_batch_with_vllm_async(batch_data))
+    except Exception as e:
+        print(f"异步处理失败，回退到同步处理: {str(e)}")
+        # 如果异步处理失败，回退到原来的同步处理
+        return process_batch_with_vllm_sync(batch_data)
+
+def process_batch_with_vllm_sync(batch_data):
+    """同步使用vLLM处理一批数据（原来的实现）"""
+    results = []
+    
+    for item_data in batch_data:
         try:
-            torch.cuda.set_device(gpu_id)
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
+            current_item = item_data["item"]
+            context_data = item_data["context_data"]
+            instruction = item_data["instruction"]
             
-            # 显示清理后的内存状态
-            memory_info = torch.cuda.get_device_properties(gpu_id)
-            total_memory = memory_info.total_memory / (1024**3)  # GB
-            allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
-            free_memory = total_memory - allocated
+            if not instruction:  # 非text类型，跳过处理
+                results.append({
+                    "index": item_data["index"],
+                    "ai_response": "",
+                    "current_text": current_item.get("text", ""),
+                    "item": current_item
+                })
+                continue
             
-            print(f"GPU {gpu_id}: 清理后 - 总内存 {total_memory:.1f}GB, 已分配 {allocated:.1f}GB, 可用 {free_memory:.1f}GB")
+            # 构建prompt
+            system_prompt, user_prompt = build_prompt(instruction, context_data)
+            
+            # 打印prompt信息
+            print(f"\n=== 处理数据 index: {item_data['index']} (同步模式) ===")
+            print(f"System Prompt: {system_prompt}")
+            print(f"User Prompt: {user_prompt}")
+            # print(f"Context Data: {json.dumps(context_data, ensure_ascii=False, indent=2)}")
+            
+            # 构建消息格式
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+            
+            # 调用vLLM API
+            ai_response = call_vllm_api(messages)
+            
+            # 打印输出结果
+            print(f"\n=== 输出结果 index: {item_data['index']} (同步模式) ===")
+            print(f"AI Response: {ai_response}")
+            print(f"Current Text: {current_item.get('text', '')}")
+            print("=" * 50)
+            
+            results.append({
+                "index": item_data["index"],
+                "ai_response": ai_response,
+                "current_text": current_item.get("text", ""),
+                "item": current_item
+            })
             
         except Exception as e:
-            print(f"清理GPU {gpu_id} 内存时出错: {e}")
-
-def force_clear_gpu_memory(gpu_id):
-    """强制清理指定GPU的内存"""
-    try:
-        torch.cuda.set_device(gpu_id)
-        
-        # 尝试释放所有缓存
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
-        
-        # 如果内存仍然被占用，尝试重置设备
-        allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
-        if allocated > 10:  # 如果还有超过10GB被占用
-            print(f"GPU {gpu_id} 内存仍被占用 {allocated:.1f}GB，尝试重置...")
-            # 注意：这会中断当前在该GPU上的所有操作
-            torch.cuda.reset_peak_memory_stats(gpu_id)
-        
-        print(f"GPU {gpu_id} 内存清理完成")
-        
-    except Exception as e:
-        print(f"强制清理GPU {gpu_id} 内存时出错: {e}")
-
-def system_clear_gpu_memory():
-    """使用系统命令清理GPU内存（需要root权限）"""
-    try:
-        print("尝试使用系统命令清理GPU内存...")
-        # 使用nvidia-smi重置GPU
-        result = subprocess.run(['nvidia-smi', '--gpu-reset'], 
-                              capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            print("✅ 系统级GPU内存清理成功")
-        else:
-            print(f"⚠️ 系统级GPU内存清理失败: {result.stderr}")
-    except Exception as e:
-        print(f"系统级GPU内存清理出错: {e}")
-
-# 获取所有任务
-def split_text():
-        print("split_text")
-        return
-
-
-def get_api_key(key_name="openai"):
-    """
-    获取指定 key_name 的最新可用 API Key，默认是 'openai'
-
-    Args:
-        key_name (str): API key 的名称
-
-    Returns:
-        str or None: 找到则返回 API key 字符串，否则返回 None
-    """
-    try:
-        conn = get_pg_conn()
-        cursor = conn.cursor()
-
-        sql = """
-            SELECT api_key 
-            FROM openapi_keys 
-            WHERE status = 1 AND key_name = %s 
-            ORDER BY updated_at DESC 
-            LIMIT 1;
-        """
-        cursor.execute(sql, (key_name,))
-        result = cursor.fetchone()
-
-        if result:
-            return result[0]
-        else:
-            print(f"⚠️ 未找到 key_name = '{key_name}' 的可用 API Key")
-            return None
-
-    except Exception as e:
-        print(f"❌ 查询 API Key 出错: {e}")
-        return None
-
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+            print(f"处理数据时出错 (index: {item_data['index']}): {str(e)}")
+            results.append({
+                "index": item_data["index"],
+                "ai_response": "",
+                "current_text": current_item.get("text", ""),
+                "item": current_item
+            })
+    
+    return results
 
 def build_prompt(instruction, input_data):
     """构建prompt，使用你的instruction模板"""
     
-    instruction_template = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+    instruction_template = """
 你是文本切割处理的审核专家，将会看到一个目标文本块，以及它的前两个文本块和后一个文本块。
 
 你的任务是**目标文本块（即第三个）**（1）是否为新层级（2）是否存在以下四类错误，并给出对应判断和修改建议。
@@ -228,7 +493,6 @@ def build_prompt(instruction, input_data):
         "page_idx": 7
     },
 你应该回复：因为阅读上下文第三文本块为这一层级的正文组成部分，所以判断为{非新层级}。因为第三文本块因是夹杂信息，所以判断为{信息错误}。建议处理方式为：{删除}
-<|eot_id|>
 """
     
     input_text = json.dumps(input_data, ensure_ascii=False, indent=2)
@@ -238,187 +502,53 @@ def build_prompt(instruction, input_data):
     
     return instruction_template, prompt
 
-def process_batch(model, tokenizer, batch_data, gpu_id):
-    """处理一批数据"""
-    results = []
-    
-    for item_data in batch_data:
-        try:
-            current_item = item_data["item"]
-            context_data = item_data["context_data"]
-            instruction = item_data["instruction"]
-            
-            # 构建prompt
-            system_prompt, user_prompt = build_prompt(instruction, context_data)
-            
-            # 构建消息格式
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ]
-            
-            # 使用tokenizer应用chat模板
-            text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-            
-            # 编码输入
-            inputs = tokenizer(
-                text,
-                return_tensors="pt",
-                truncation=True,
-                max_length=4096,
-                padding=True
-            ).to(f"cuda:{gpu_id}")
-            
-            # 生成回答
-            with torch.no_grad():
-                output = model.generate(
-                    **inputs,
-                    max_new_tokens=2000,
-                    do_sample=False,
-                    num_beams=1
-                )
-            
-            # 解码输出
-            decoded = tokenizer.decode(output[0], skip_special_tokens=True)
-            ai_response = decoded.split("assistant")[-1].strip()
-            
-            # 清理内存
-            del inputs, output
-            torch.cuda.empty_cache()
-            
-            results.append({
-                "index": item_data["index"],
-                "ai_response": ai_response,
-                "current_text": current_item.get("text", ""),
-                "item": current_item
-            })
-            
-        except Exception as e:
-            print(f"GPU {gpu_id} 处理数据时出错 (index: {item_data['index']}): {str(e)}")
-            results.append({
-                "index": item_data["index"],
-                "ai_response": "",
-                "current_text": current_item.get("text", ""),
-                "item": current_item
-            })
-    
-    return results
+def get_api_key(key_name="openai"):
+    """
+    获取指定 key_name 的最新可用 API Key，默认是 'openai'
 
-def run_worker(gpu_id, data_to_process, return_dict):
-    """GPU工作进程"""
+    Args:
+        key_name (str): API key 的名称
+
+    Returns:
+        str or None: 找到则返回 API key 字符串，否则返回 None
+    """
     try:
-        # 强制清理GPU内存
-        force_clear_gpu_memory(gpu_id)
-        
-        torch.cuda.set_device(gpu_id)
-        torch.cuda.empty_cache()
-        
-        # 检查GPU内存状态
-        memory_info = torch.cuda.get_device_properties(gpu_id)
-        total_memory = memory_info.total_memory / (1024**3)  # GB
-        allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
-        free_memory = total_memory - allocated
-        
-        print(f"GPU {gpu_id}: 总内存 {total_memory:.1f}GB, 已分配 {allocated:.1f}GB, 可用 {free_memory:.1f}GB")
-        
-        # 如果可用内存小于15GB，尝试强制清理
-        if free_memory < 15:
-            print(f"⚠️ GPU {gpu_id} 内存不足，尝试强制清理...")
-            force_clear_gpu_memory(gpu_id)
-            
-            # 重新检查内存
-            allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
-            free_memory = total_memory - allocated
-            print(f"GPU {gpu_id}: 强制清理后 - 可用 {free_memory:.1f}GB")
-            
-            # 如果仍然不足，跳过这个GPU
-            if free_memory < 15:
-                print(f"❌ GPU {gpu_id} 内存仍然不足，跳过处理")
-                return_dict[gpu_id] = []
-                return
-        
-        print(f"GPU {gpu_id}: 开始加载模型...")
+        conn = get_pg_conn()
+        cursor = conn.cursor()
 
-        # 模型路径配置
-        base_model_path = "/data/training/model/Meta-Llama-3.1-8B-Instruct"
-        lora_path = "/data/training/llama3.1_8b_checkpoint/20250604/checkpoint-1005"
+        sql = """
+            SELECT api_key 
+            FROM openapi_keys 
+            WHERE status = 1 AND key_name = %s 
+            ORDER BY updated_at DESC 
+            LIMIT 1;
+        """
+        cursor.execute(sql, (key_name,))
+        result = cursor.fetchone()
 
-        # 加载tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(
-            base_model_path,
-            trust_remote_code=True
-        )
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
+        if result:
+            return result[0]
+        else:
+            print(f"⚠️ 未找到 key_name = '{key_name}' 的可用 API Key")
+            return None
 
-        # 加载基础模型，使用更保守的内存设置
-        base_model = AutoModelForCausalLM.from_pretrained(
-            base_model_path,
-            device_map={'': gpu_id},
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True,
-            low_cpu_mem_usage=True,
-            max_memory={gpu_id: f"{int(free_memory * 0.7)}GB"}  # 只使用70%的可用内存
-        ).eval()
-
-        # 加载LoRA模型
-        model = PeftModel.from_pretrained(
-            base_model,
-            model_id=lora_path,
-            device_map={'': gpu_id}
-        )
-        model.eval()
-        print(f"GPU {gpu_id}: 模型加载完成")
-
-        # 获取分配给当前GPU的数据
-        gpu_data = data_to_process[gpu_id::NUM_GPUS]
-        total_items = len(gpu_data)
-        print(f"GPU {gpu_id}: 开始处理 {total_items} 条数据")
-
-        batch_size = 1
-        results = []
-        
-        for i in range(0, total_items, batch_size):
-            try:
-                batch = gpu_data[i:i+batch_size]
-                batch_results = process_batch(model, tokenizer, batch, gpu_id)
-                results.extend(batch_results)
-                
-                progress = (i + batch_size) / total_items * 100
-                print(f"GPU {gpu_id}: 进度 {progress:.2f}% ({i + batch_size}/{total_items})")
-                
-                # 每处理3个批次就清理一次内存
-                if i % 3 == 0:
-                    torch.cuda.empty_cache()
-                    
-            except torch.cuda.OutOfMemoryError as e:
-                print(f"❌ GPU {gpu_id} 内存不足，停止处理: {e}")
-                # 清理内存并继续处理剩余数据
-                torch.cuda.empty_cache()
-                continue
-            except Exception as e:
-                print(f"❌ GPU {gpu_id} 处理批次时出错: {e}")
-                continue
-
-        return_dict[gpu_id] = results
-        print(f"✅ GPU {gpu_id} 完成任务，处理 {len(results)} 条")
-        
     except Exception as e:
-        print(f"❌ GPU {gpu_id} 执行出错：{str(e)}")
-        traceback.print_exc()
-        return_dict[gpu_id] = []
+        print(f"❌ 查询 API Key 出错: {e}")
+        return None
+
     finally:
-        if 'model' in locals():
-            del model
-        if 'base_model' in locals():
-            del base_model
-        if 'tokenizer' in locals():
-            del tokenizer
-        torch.cuda.empty_cache()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+def split_text():
+    print("split_text")
+    return
 
 def process_qa_for_version_0(run_id: str) -> dict:
     """
-    对版本0的数据进行QA问答对处理，生成版本1 - 异步多GPU版本
+    对版本0的数据进行QA问答对处理，生成版本1 - 使用vLLM服务版本
     
     Args:
         run_id (str): 运行ID
@@ -429,28 +559,34 @@ def process_qa_for_version_0(run_id: str) -> dict:
     try:
         print(f"开始处理QA问答对，run_id: {run_id}")
         
-        # 启动前清理所有GPU内存
-        print("启动前清理所有GPU内存...")
-        clear_all_gpu_memory()
+        # 1. 启动vLLM服务
+        if not start_vllm_service():
+            raise Exception("vLLM服务启动失败")
         
-        # 如果GPU内存仍然被占用，尝试系统级清理
-        print("检查GPU内存状态...")
-        total_allocated = 0
-        for gpu_id in range(8):
-            try:
-                torch.cuda.set_device(gpu_id)
-                allocated = torch.cuda.memory_allocated(gpu_id) / (1024**3)  # GB
-                total_allocated += allocated
-            except:
-                pass
+        # 等待服务启动完成
+        print("等待vLLM服务启动...")
+        max_wait_time = 300  # 最多等待5分钟
+        check_interval = 10  # 每10秒检查一次
+        waited_time = 0
         
-        if total_allocated > 100:  # 如果总占用超过100GB
-            print(f"GPU内存总占用 {total_allocated:.1f}GB，尝试系统级清理...")
-            system_clear_gpu_memory()
-            # 再次清理
-            clear_all_gpu_memory()
+        while waited_time < max_wait_time:
+            if check_vllm_service_health():
+                print(f"✅ vLLM服务健康检查通过，端口: {VLLM_SERVICE['port']}")
+                break
+            else:
+                print(f"⏳ 服务尚未就绪，等待中... ({waited_time}/{max_wait_time}秒)")
+                time.sleep(check_interval)
+                waited_time += check_interval
+        else:
+            raise Exception(f"vLLM服务启动超时，等待了{max_wait_time}秒后仍未就绪，端口: {VLLM_SERVICE['port']}")
         
-        # 1. 获取版本0的数据
+        # 验证LoRA模型是否正确加载
+        if not verify_lora_model_loaded():
+            print("⚠️ LoRA模型验证失败，但继续执行...")
+        else:
+            print("✅ LoRA模型验证成功")
+        
+        # 2. 获取版本0的数据
         version_0_data = query_pdf_text_contents(run_id, 0)
         
         if not version_0_data:
@@ -458,7 +594,7 @@ def process_qa_for_version_0(run_id: str) -> dict:
         
         print(f"获取到版本0数据，共 {len(version_0_data)} 条记录")
         
-        # 2. 按原始顺序处理所有数据，准备多GPU处理
+        # 3. 按原始顺序处理所有数据
         data_to_process = []
         text_processed_count = 0
         
@@ -477,15 +613,28 @@ def process_qa_for_version_0(run_id: str) -> dict:
                 # 构建上下文数据（前两个和后一个文本块）
                 context_data = []
                 
-                # 添加前两个文本块（如果存在）
-                for j in range(max(0, i-2), i):
+                # 添加前两个text类型的文本块（如果存在）
+                prev_count = 0
+                for j in range(i-1, -1, -1):  # 从当前索引向前查找
+                    if prev_count >= 2:  # 已经找到2个前文
+                        break
                     prev_item = sorted_data[j]
-                    text = prev_item.get("text", "").strip()
-                    if not text:  # 如果text为空
-                        text = "(此text不是有效文本，不需要参与判断)"
-                    context_data.append({
-                        "text": text,
-                        "page_idx": prev_item.get("page_index", 0)
+                    prev_type = prev_item.get("type", "正文")
+                    if prev_type.lower() == "text" or prev_type == "正文":
+                        text = prev_item.get("text", "").strip()
+                        if not text:  # 如果text为空
+                            text = "(此text不是有效文本，不需要参与判断)"
+                        context_data.insert(0, {  # 插入到开头，保持顺序
+                            "text": text,
+                            "page_idx": prev_item.get("page_index", 0)
+                        })
+                        prev_count += 1
+                
+                # 如果前文不足2个，用占位符填充
+                while len(context_data) < 2:
+                    context_data.insert(0, {
+                        "text": "(此text不是有效文本，不需要参与判断)",
+                        "page_idx": 0
                     })
                 
                 # 添加当前文本块（第三个）
@@ -497,16 +646,31 @@ def process_qa_for_version_0(run_id: str) -> dict:
                     "page_idx": current_item.get("page_index", 0)
                 })
                 
-                # 添加后一个文本块（如果存在）
-                if i + 1 < len(sorted_data):
-                    next_item = sorted_data[i + 1]
-                    next_text = next_item.get("text", "").strip()
-                    if not next_text:  # 如果text为空
-                        next_text = "(此text不是有效文本，不需要参与判断)"
+                # 添加后一个text类型的文本块（如果存在）
+                has_next = False
+                for j in range(i+1, len(sorted_data)):
+                    next_item = sorted_data[j]
+                    next_type = next_item.get("type", "正文")
+                    if next_type.lower() == "text" or next_type == "正文":
+                        next_text = next_item.get("text", "").strip()
+                        if not next_text:  # 如果text为空
+                            next_text = "(此text不是有效文本，不需要参与判断)"
+                        context_data.append({
+                            "text": next_text,
+                            "page_idx": next_item.get("page_index", 0)
+                        })
+                        has_next = True
+                        break  # 只添加第一个后文
+                
+                # 如果没有后文，添加占位符
+                if not has_next:
                     context_data.append({
-                        "text": next_text,
-                        "page_idx": next_item.get("page_index", 0)
+                        "text": "(此text不是有效文本，不需要参与判断)",
+                        "page_idx": 0
                     })
+                
+                # 确保context_data正好有4个元素
+                assert len(context_data) == 4, f"上下文数据长度不正确: {len(context_data)}, 应该是4个"
                 
                 # 构建instruction
                 instruction = "请问第三文本块是否为新的层级？另外，内容是否正确，如果错误应该建议如何修改?"
@@ -529,40 +693,36 @@ def process_qa_for_version_0(run_id: str) -> dict:
         
         print(f"准备完成，共 {len(data_to_process)} 条数据待处理（其中 {text_processed_count} 条text类型）")
         
-        # 3. 启动多GPU并行处理
-        from torch.multiprocessing import set_start_method
-        try:
-            set_start_method('spawn', force=True)
-        except RuntimeError:
-            pass
-
-        manager = Manager()
-        return_dict = manager.dict()
-        processes = []
-
-        print(f"启动 {NUM_GPUS} 个GPU进程...")
-        for idx, gpu_id in enumerate(gpu_ids):
-            p = Process(target=run_worker, args=(gpu_id, data_to_process, return_dict))
-            p.start()
-            processes.append(p)
-            time.sleep(2)  # 避免同时启动造成资源竞争
-
-        # 等待所有进程完成
-        for p in processes:
-            p.join()
-
-        # 4. 收集所有GPU的处理结果
+        # 4. 使用vLLM服务处理数据
+        print("开始使用vLLM服务处理数据...")
+        
+        # 分批处理，避免单次请求过大
+        batch_size = 5  # 每批处理5条数据，减少并发压力
         all_results = []
-        for gpu_id in gpu_ids:
-            if gpu_id in return_dict:
-                all_results.extend(return_dict[gpu_id])
-            else:
-                print(f"⚠️ GPU {gpu_id} 没有返回结果，已跳过。")
-
+        
+        for i in range(0, len(data_to_process), batch_size):
+            batch = data_to_process[i:i+batch_size]
+            print(f"处理批次 {i//batch_size + 1}/{(len(data_to_process) + batch_size - 1)//batch_size}，共 {len(batch)} 条数据")
+            
+            try:
+                batch_results = process_batch_with_vllm(batch)
+                all_results.extend(batch_results)
+                print(f"✅ 批次 {i//batch_size + 1} 处理完成")
+            except Exception as e:
+                print(f"❌ 批次 {i//batch_size + 1} 处理失败: {str(e)}")
+                # 对于失败的批次，添加空结果
+                for item in batch:
+                    all_results.append({
+                        "index": item["index"],
+                        "ai_response": "",
+                        "current_text": item["item"].get("text", ""),
+                        "item": item["item"]
+                    })
+        
         # 按原始索引排序
         all_results.sort(key=lambda x: x["index"])
         
-        print(f"多GPU处理完成，共收集到 {len(all_results)} 条结果")
+        print(f"vLLM服务处理完成，共收集到 {len(all_results)} 条结果")
         
         # 5. 根据AI分析结果调整数据
         print("根据AI分析结果调整数据...")
@@ -640,7 +800,12 @@ def process_qa_for_version_0(run_id: str) -> dict:
         
     except Exception as e:
         print(f"QA问答对处理失败: {str(e)}")
+        traceback.print_exc()
         raise
+    finally:
+        # 清理vLLM服务
+        print("清理vLLM服务...")
+        #stop_vllm_service()
 
 def parse_remark_and_adjust_data(ai_response: str, current_text: str, current_index: int, all_data: list) -> dict:
     """
@@ -679,6 +844,16 @@ def parse_remark_and_adjust_data(ai_response: str, current_text: str, current_in
                 # 清理markdown标记，但保留<mark>标记
                 suggested_text = re.sub(r'\\\*\\\*', '**', suggested_text)
                 adjusted_text = suggested_text
+        elif "{文本错误}" in ai_response:
+            # 提取建议的处理方式
+            pattern = r'建议处理方式为\{(.*?)\}'
+            match = re.search(pattern, ai_response, re.DOTALL)
+            if match:
+                suggested_text = match.group(1).strip()
+                # 清理markdown标记，但保留<mark>标记
+                suggested_text = re.sub(r'\\\*\\\*', '**', suggested_text)
+                adjusted_text = suggested_text
+                print(f"文本错误修正: '{current_text}' -> '{suggested_text}'")
         
         # 3. 其他情况（正确、格式错误等）保持原文本不变
         else:
