@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from synapse_flow.web.services.dataset_job_service import query_pdf_text_contents, insert_pdf_text_contents
 import re
 import traceback
+import datetime
 
 # 配置参数
 BASE_MODEL_PATH = "/data/training/model/Meta-Llama-3.1-8B-Instruct"
@@ -388,7 +389,10 @@ def process_batch_with_vllm_sync(batch_data):
 
 def build_prompt(instruction, input_data):
     """构建prompt，使用你的instruction模板"""
-    
+    # 修正前两个占位符的page_idx
+    for idx, item in enumerate(input_data):
+        if idx < 2 and item.get("text") == "(此text不是有效文本，不需要参与判断)" and item.get("page_idx", 0) == 0:
+            item["page_idx"] = -1
     instruction_template = """
 你是文本切割处理的审核专家，将会看到一个目标文本块，以及它的前两个文本块和后一个文本块。
 
@@ -498,6 +502,18 @@ def build_prompt(instruction, input_data):
     input_text = json.dumps(input_data, ensure_ascii=False, indent=2)
     instruction_text = f"需要你回答的问题是：{instruction}"
     input_text = f"需要分析的这段语句如下：{input_text}"
+
+    # 日志追加写入，带BOM，保证Windows记事本不乱码
+    log_path = "prompt_input_log.txt"
+    if not os.path.exists(log_path):
+        with open(log_path, "w", encoding="utf-8-sig") as f:
+            pass
+    try:
+        with open(log_path, "a", encoding="utf-8-sig") as logf:
+            logf.write(f"\n[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]\n{input_text}\n")
+    except Exception as e:
+        print(f"[日志写入失败] {e}")
+
     prompt = f"{instruction_text}\n{input_text}\n请根据问题要求与问题进行回答。"
     
     return instruction_template, prompt
@@ -727,42 +743,68 @@ def process_qa_for_version_0(run_id: str) -> dict:
         # 5. 根据AI分析结果调整数据
         print("根据AI分析结果调整数据...")
         
-        # 先处理向前合并的情况
+        # 第一步：先解析所有AI建议，生成修正后的文本
+        for i, analysis in enumerate(all_results):
+            ai_response = analysis["ai_response"]
+            current_text = analysis["current_text"]
+            
+            if ai_response:  # 有AI分析结果
+                # 解析remark并调整数据
+                adjusted_item = parse_remark_and_adjust_data(ai_response, current_text, i, all_results)
+                # 将修正后的文本存储回结果中
+                all_results[i]["adjusted_text"] = adjusted_item["text"]
+                all_results[i]["is_title_marked"] = adjusted_item["is_title_marked"]
+            else:
+                # 没有AI分析结果，保持原文本
+                all_results[i]["adjusted_text"] = current_text
+                all_results[i]["is_title_marked"] = False
+        
+        # 第二步：处理向前合并的情况（使用修正后的文本）
         for i, analysis in enumerate(all_results):
             ai_response = analysis["ai_response"]
             if "{向前合并}" in ai_response and "{删除}" in ai_response:
                 # 找到上一个非空文本
                 prev_index = i - 1
-                while prev_index >= 0 and not all_results[prev_index].get("current_text", "").strip():
+                while prev_index >= 0 and not all_results[prev_index].get("adjusted_text", "").strip():
                     prev_index -= 1
                 
                 if prev_index >= 0:
-                    # 拼接文本到上一个数据项
-                    prev_text = all_results[prev_index].get("current_text", "")
-                    current_text = analysis["current_text"]
-                    all_results[prev_index]["current_text"] = prev_text + current_text
+                    # 合并时用AI修正后的文本，如果修正后内容为空，则用原始内容
+                    prev_text = all_results[prev_index].get("adjusted_text", "").rstrip()
+                    current_text = analysis.get("adjusted_text", "").lstrip()
+                    if not current_text:
+                        # 如果修正后内容为空，尝试用原始内容
+                        current_text = analysis["item"].get("text", "").lstrip()
+                    # 直接拼接，不加空格
+                    merged_text = prev_text + current_text
+                    # 正则清理<mark>后所有空白和换行
+                    merged_text = re.sub(r'<mark>[\s\u3000]*', '<mark>', merged_text)
+                    all_results[prev_index]["adjusted_text"] = merged_text
                     # 当前文本置空
-                    all_results[i]["current_text"] = ""
+                    all_results[i]["adjusted_text"] = ""
+                    print(f"向前合并: 第{i}块文本合并到第{prev_index}块，合并后文本: {merged_text[:100]}...")
         
-        # 然后构建最终的处理数据
+        # 第三步：构建最终的处理数据
         processed_data = []
         for i, analysis in enumerate(all_results):
             current_item = analysis["item"]
             ai_response = analysis["ai_response"]
-            current_text = analysis["current_text"]  # 使用可能已经调整过的文本
+            adjusted_text = analysis.get("adjusted_text", "")  # 使用最终调整后的文本
+            is_title_marked = analysis.get("is_title_marked", False)
+            
+            # 最终清理：确保所有文本都没有<mark>后空白和换行
+            if adjusted_text:
+                adjusted_text = re.sub(r'<mark>[ \t\r\n]*', '<mark>', adjusted_text)
             
             if ai_response:  # 有AI分析结果
-                # 解析remark并调整数据
-                adjusted_item = parse_remark_and_adjust_data(ai_response, current_text, i, all_results)
-                
                 # 构建处理后的数据项
                 processed_item = {
-                    "text": adjusted_item["text"],
+                    "text": adjusted_text,
                     "page_index": current_item.get("page_index", 0),
                     "text_level": current_item.get("text_level", 1),
                     "type": current_item.get("type", "正文"),
                     "block_index": current_item.get("block_index", 0),
-                    "is_title_marked": adjusted_item["is_title_marked"],
+                    "is_title_marked": is_title_marked,
                     "exclude_from_finetune": current_item.get("exclude_from_finetune", False),
                     "remark": ai_response,  # 将AI分析结果存储到remark字段
                     "original_text": current_item.get("text", "")  # 保存原始文本到original_text字段
@@ -770,12 +812,12 @@ def process_qa_for_version_0(run_id: str) -> dict:
             else:
                 # 没有AI分析结果（非text类型或处理失败）
                 processed_item = {
-                    "text": current_text,  # 使用可能已经调整过的文本
+                    "text": adjusted_text,  # 使用最终调整后的文本
                     "page_index": current_item.get("page_index", 0),
                     "text_level": current_item.get("text_level", 1),
                     "type": current_item.get("type", ""),
                     "block_index": current_item.get("block_index", 0),
-                    "is_title_marked": current_item.get("is_title_marked", False),
+                    "is_title_marked": is_title_marked,
                     "exclude_from_finetune": current_item.get("exclude_from_finetune", False),
                     "remark": "",  # 非text类型remark为空
                     "original_text": current_item.get("text", "")  # 保存原始文本到original_text字段
@@ -835,6 +877,9 @@ def parse_remark_and_adjust_data(ai_response: str, current_text: str, current_in
         if "{删除}" in ai_response:
             # 删除：置空文本
             adjusted_text = ""
+        elif "{向前合并}" in ai_response and "{删除}" in ai_response:
+            # 向前合并：保持原文本，等待后续处理
+            adjusted_text = current_text
         elif "{需要拆分}" in ai_response:
             # 提取建议的处理方式
             pattern = r'建议处理方式为：\{(.*?)\}'
@@ -843,6 +888,8 @@ def parse_remark_and_adjust_data(ai_response: str, current_text: str, current_in
                 suggested_text = match.group(1).strip()
                 # 清理markdown标记，但保留<mark>标记
                 suggested_text = re.sub(r'\\\*\\\*', '**', suggested_text)
+                # 处理<mark>\n，将其替换为<mark>
+                suggested_text = suggested_text.replace('<mark>\n', '<mark>')
                 adjusted_text = suggested_text
         elif "{文本错误}" in ai_response:
             # 提取建议的处理方式
@@ -852,12 +899,18 @@ def parse_remark_and_adjust_data(ai_response: str, current_text: str, current_in
                 suggested_text = match.group(1).strip()
                 # 清理markdown标记，但保留<mark>标记
                 suggested_text = re.sub(r'\\\*\\\*', '**', suggested_text)
+                # 处理<mark>\n，将其替换为<mark>
+                suggested_text = suggested_text.replace('<mark>\n', '<mark>')
                 adjusted_text = suggested_text
                 print(f"文本错误修正: '{current_text}' -> '{suggested_text}'")
         
         # 3. 其他情况（正确、格式错误等）保持原文本不变
         else:
             adjusted_text = current_text
+        
+        # 4. 对所有调整后的文本都进行<mark>\n清理
+        if adjusted_text:
+            adjusted_text = re.sub(r'<mark>[ \t\r\n]*', '<mark>', adjusted_text)
             
     except Exception as e:
         print(f"解析remark时出错: {str(e)}")
