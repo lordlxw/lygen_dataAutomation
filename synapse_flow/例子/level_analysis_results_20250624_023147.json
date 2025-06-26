@@ -1,0 +1,660 @@
+[
+  {
+    "original_data": {
+      "text": "第一章 房地产行业概况",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "请问：\n{\n  \"text\": \"第一章 房地产行业概况\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": []
+  },
+  {
+    "original_data": {
+      "text": "第一节 业务分类",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"第一章 房地产行业概况\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第一节 业务分类\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "第一章 房地产行业概况",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 0
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "一、依照开发主体的数量划分，房地产企业分为自行开发和合作开发：自行开发是指开发企业自己拿地、独立开发，自担开发风险、自享开发成果；合作开发是指一方提供资金，一方提供土地的开发方式，根据合作和分配方式的不同，合作开发又分为以物易物、共担风险、收取固定收益三种方式。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"第一章 房地产行业概况\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第一节 业务分类\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"一、依照开发主体的数量划分，房地产企业分为自行开发和合作开发：自行开发是指开发企业自己拿地、独立开发，自担开发风险、自享开发成果；合作开发是指一方提供资金，一方提供土地的开发方式，根据合作和分配方式的不同，合作开发又分为以物易物、共担风险、收取固定收益三种方式。\",\n  \"isTitleMarked\": \"context level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "第一章 房地产行业概况",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 0
+      },
+      {
+        "text": "第一节 业务分类",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 1
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "二、依照开发主体的经营内容来划分，房地产企业分为单纯开发销售房产、单纯转让土地使用权（目前受土地管理法的限制，不能单纯转让土地使用权了）、既销售房产又转让土地使用权以及兼营代建业务。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"第一章 房地产行业概况\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第一节 业务分类\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n{\n  \"text\": \"一、依照开发主体的数量划分，房地产企业分为自行开发和合作开发：自行开发是指开发企业自己拿地、独立开发，自担开发风险、自享开发成果；合作开发是指一方提供资金，一方提供土地的开发方式，根据合作和分配方式的不同，合作开发又分为以物易物、共担风险、收取固定收益三种方式。\",\n  \"isTitleMarked\": \"context level\",\n}\n以上为第3层级开头内容格式；\n\n请问：\n{\n  \"text\": \"二、依照开发主体的经营内容来划分，房地产企业分为单纯开发销售房产、单纯转让土地使用权（目前受土地管理法的限制，不能单纯转让土地使用权了）、既销售房产又转让土地使用权以及兼营代建业务。\",\n  \"isTitleMarked\": \"context level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "第一章 房地产行业概况",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 0
+      },
+      {
+        "text": "第一节 业务分类",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 1
+      },
+      {
+        "text": "一、依照开发主体的数量划分，房地产企业分为自行开发和合作开发：自行开发是指开发企业自己拿地、独立开发，自担开发风险、自享开发成果；合作开发是指一方提供资金，一方提供土地的开发方式，根据合作和分配方式的不同，合作开发又分为以物易物、共担风险、收取固定收益三种方式。",
+        "isTitleMarked": "context level",
+        "level": 3,
+        "index": 2
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第二节 业务流程",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"第一章 房地产行业概况\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第一节 业务分类\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n{\n  \"text\": \"二、依照开发主体的经营内容来划分，房地产企业分为单纯开发销售房产、单纯转让土地使用权（目前受土地管理法的限制，不能单纯转让土地使用权了）、既销售房产又转让土地使用权以及兼营代建业务。\",\n  \"isTitleMarked\": \"context level\",\n}\n以上为第3层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 业务流程\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "第一章 房地产行业概况",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 0
+      },
+      {
+        "text": "第一节 业务分类",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 1
+      },
+      {
+        "text": "二、依照开发主体的经营内容来划分，房地产企业分为单纯开发销售房产、单纯转让土地使用权（目前受土地管理法的限制，不能单纯转让土地使用权了）、既销售房产又转让土地使用权以及兼营代建业务。",
+        "isTitleMarked": "context level",
+        "level": 3,
+        "index": 3
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "一、前期准备阶段",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"第一章 房地产行业概况\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第二节 业务流程\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"一、前期准备阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "第一章 房地产行业概况",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 0
+      },
+      {
+        "text": "第二节 业务流程",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 4
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "二、建设施工阶段",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"一、前期准备阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"二、建设施工阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "一、前期准备阶段",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 5
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "三、销售阶段",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"二、建设施工阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"三、销售阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "二、建设施工阶段",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 6
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "四、物业保有阶段",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"三、销售阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"四、物业保有阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "三、销售阶段",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 7
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第三节 集团架构",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"四、物业保有阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第三节 集团架构\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "四、物业保有阶段",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 8
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第四节 业务特点",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"四、物业保有阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第三节 集团架构\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第四节 业务特点\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "四、物业保有阶段",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 8
+      },
+      {
+        "text": "第三节 集团架构",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 9
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "一、开发主体不稳定",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"四、物业保有阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第四节 业务特点\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"一、开发主体不稳定\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "四、物业保有阶段",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 8
+      },
+      {
+        "text": "第四节 业务特点",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 10
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "二、生产经营周期长",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"一、开发主体不稳定\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"二、生产经营周期长\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "一、开发主体不稳定",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 11
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "三、资金需求量大",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"二、生产经营周期长\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"三、资金需求量大\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "二、生产经营周期长",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 12
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "四、项目开发经营内容复杂",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"三、资金需求量大\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"四、项目开发经营内容复杂\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "三、资金需求量大",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 13
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "五、许可审批环节多",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"四、项目开发经营内容复杂\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"五、许可审批环节多\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "四、项目开发经营内容复杂",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 14
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第五节 征管现状",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"五、许可审批环节多\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第五节 征管现状\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "五、许可审批环节多",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 15
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第二章 房地产企业会计核算",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"五、许可审批环节多\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第五节 征管现状\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二章 房地产企业会计核算\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "五、许可审批环节多",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 15
+      },
+      {
+        "text": "第五节 征管现状",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 16
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第一节 科目设置",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"五、许可审批环节多\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第二章 房地产企业会计核算\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第一节 科目设置\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "五、许可审批环节多",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 15
+      },
+      {
+        "text": "第二章 房地产企业会计核算",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 17
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "备注：",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"五、许可审批环节多\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第一节 科目设置\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"备注：\",\n  \"isTitleMarked\": \"context level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "五、许可审批环节多",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 15
+      },
+      {
+        "text": "第一节 科目设置",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 18
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第二节 会计处理",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"五、许可审批环节多\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第一节 科目设置\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n{\n  \"text\": \"备注：\",\n  \"isTitleMarked\": \"context level\",\n}\n以上为第3层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 会计处理\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "五、许可审批环节多",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 15
+      },
+      {
+        "text": "第一节 科目设置",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 18
+      },
+      {
+        "text": "备注：",
+        "isTitleMarked": "context level",
+        "level": 3,
+        "index": 19
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "一、房地产企业主要会计核算流程图",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"五、许可审批环节多\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"第二节 会计处理\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"一、房地产企业主要会计核算流程图\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "五、许可审批环节多",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 15
+      },
+      {
+        "text": "第二节 会计处理",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 20
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "二、房地产开发各阶段主要会计处理",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"一、房地产企业主要会计核算流程图\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"二、房地产开发各阶段主要会计处理\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "一、房地产企业主要会计核算流程图",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 21
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（一）前期准备阶段",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+    "parsed_result": {
+      "level": 1,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级一}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"一、房地产企业主要会计核算流程图\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n{\n  \"text\": \"二、房地产开发各阶段主要会计处理\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第2层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）前期准备阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "一、房地产企业主要会计核算流程图",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 21
+      },
+      {
+        "text": "二、房地产开发各阶段主要会计处理",
+        "isTitleMarked": "section level",
+        "level": 2,
+        "index": 22
+      }
+    ]
+  },
+  {
+    "original_data": {
+      "text": "1.支付土地出让金、契税、拆迁补偿费、各项规费等。  借：开发成本——土地出让金、拆迁补偿费等  贷：银行存款。  <mark>2.支付与立项、可行性分析等相关的一般性费用。  借：开发成本——前期开发费（或开发间接费用）  贷：银行存款（或现金）。<mark>",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "system_prompt": "你是一个文本层级梳理专家，你的任务是**判断目标文本块的层级**\n\n你会得到四种信息，辅助你确定目标文本块的层级：\n1. 目标文本块的内容：这个文本块的内容是一个层级的开头部分，具有层级的内容与结构特征，可以方便你进行判断；\n2. 层级标记：\n（1）section level：这里指的从这里开始可能是一个结构层级，是整个文章的书写框架结构标题；\n（2）context level：这里指的从这里开始可能是一个段落层级，是结构下文章段落内的叙述标题；\n3. 目标文本块的前文相关递进层级：通过对比以往的层级，辅助你判断目标文本块作为层级开头应该属于什么层级；\n\n**注意**：不管段落或结构层级的相同与否，并不能成为判断的决定性依据，要考虑内容与格式带来的影响。\n\n回答格式：\n如果是正常情况判断请回答：因为目标文本开头是前文XXX，且XXX，所以判断为{层级X}。\n如果是特殊情况判断请回答：因为目标文本开头是前文XXX，且XXX，但我认为{层级主题错误/层级顺序混乱/层级格式不同却语义相关}，所以判断为{层级X}。\n\n举例1：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。\n\n举例2：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国个人所得税法\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一条【征税范围】\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n请问：\n{\n  \"text\": \"（一）因任职、受雇、履约等在中国境内提供劳务取得的所得；\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。\n\n举例4：\n我们已经确认：\n{\n  \"text\": \"中华人民共和国增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": context level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为段落层级，所以判断为{层级四}。\n\n举例5：\n我们已经确认：\n{\n  \"text\": \"企业设立管理\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 登记信息确认\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"三、纳税人（扣缴义务人）身份信息报告\",\n  \"isTitleMarked\": section level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"5.从事生产、经营的纳税人，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第四层级开头内容格式；\n\n请问：\n{\n  \"text\": \"第二节 增值税一般纳税人登记\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。\n\n举例6：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"7.我们需要判断其具有的时间要素。...\",\n  \"isTitleMarked\": context level,\n}\n以上为第三层级开头内容格式；\n\n{\n  \"text\": \"（1）时间的先后顺序：...\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级主题错误}，所以判断为{层级四}。\n\n举例7：（特殊）\n我们已经确认：\n{\n  \"text\": \"增值税法大全\",\n  \"isTitleMarked\": section level,\n}\n以上为第一层级开头内容格式；\n\n{\n  \"text\": \"（5）我认为这本书是一本优秀的书籍，...\",\n  \"isTitleMarked\": context level,\n}\n以上为第二层级开头内容格式；\n\n{\n  \"text\": \"第一节 基本要素\",\n  \"isTitleMarked\": section level,\n}\n是第几层级的开头内容？\n\n回答：因为目标文本开头为前文不具有的一种新层级格式，且是段落层级回到结构层级，但我认为{层级顺序混乱}，所以判断为{层级二}。",
+    "user_prompt": "我们已经确认：\n{\n  \"text\": \"（一）前期准备阶段\",\n  \"isTitleMarked\": \"section level\",\n}\n以上为第1层级开头内容格式；\n\n请问：\n{\n  \"text\": \"1.支付土地出让金、契税、拆迁补偿费、各项规费等。  借：开发成本——土地出让金、拆迁补偿费等  贷：银行存款。  <mark>2.支付与立项、可行性分析等相关的一般性费用。  借：开发成本——前期开发费（或开发间接费用）  贷：银行存款（或现金）。<mark>\",\n  \"isTitleMarked\": \"context level\",\n}\n是第几层级的开头内容？",
+    "context_path": [
+      {
+        "text": "（一）前期准备阶段",
+        "isTitleMarked": "section level",
+        "level": 1,
+        "index": 23
+      }
+    ]
+  }
+]

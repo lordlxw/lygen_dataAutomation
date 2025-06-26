@@ -396,31 +396,34 @@ def build_prompt(instruction, input_data):
     instruction_template = """
 你是文本切割处理的审核专家，将会看到一个目标文本块，以及它的前两个文本块和后一个文本块。
 
-你的任务是**目标文本块（即第三个）**（1）是否为新层级（2）是否存在以下四类错误，并给出对应判断和修改建议。
-文本块层级判断：
-（1）新层级：文本块开头句子具有明确新文本层级结构特征如：（1）、一、首先、a.等；
-（2）非新层级：文本块开头句子没有明确新文本层级结构特征；
+你的任务是**目标文本块（即第三个）**（1）判断是哪一种新层级（2）是否存在以下四类错误，并给出对应判断和修改建议。
+根据第三文本块上下文进行层级判断：
+（1）结构新层级：第三文本块的开头是文章的结构性标题，特征如："第一章 增值税"等，是一个标题词汇；
+（2）段落新层级：第三文本块的开头句子是正文段落内的叙述标题，特征也如：（1）、一、首先、a.等，但是一句句子；
+（3）图表新层级：文本块开头句子正文内容中特指图表的小标题，特征如：图：XXXX，下表如：，等；**注意**不是内容里有说到图或表就是图表新层级，而是特指后面文本块跟着是表或图！
+（4）附注新层级：文本块开头句子正文内容中特指附注的小标题，特征如："注：XX"等，**注意**不是内容里有提到是补充内容就是附注新层级，而是特指后面文本块跟着是附注内容！
+（5）非新层级：文本块开头句子没有明确新文本层级结构特征；
 
 错误文本内容判断：
 （1）字符错误：文本含有不合理字符，如乱码、错误符号、混杂代码符号（公式不算）；
 （2）格式错误：文本块开头是句子残段，其上半句存在于上一个文本块结尾；
 （3）信息错误：文本块为空、为页码、目录、标题页、版权页、装订信息等与正文无关的内容。
-（4）需要拆分：文本块有多个层级的文本块，在原文中加入"<mark>"将其区分。
+（4）需要拆分：文本块有多个层级的文本块，在原文中加入"<mark>"将其区分。**注意**最后必须以<mark>作为结尾
 
 正确文本内容判断：
 如果目标文本块不存在上述四类问题，即为正常文本块。
 
-判断顺序：（1）判断是否为新层级（2）判断文本块内容是否错误
+判断顺序：（1）判断是哪一种新层级（2）判断文本块内容是否错误
 
 输出格式要求：
 判断结论请统一使用如下格式：
-因为阅读上下文第三文本块XXX，所以判断为{是否为新层级}。因为第三文本块因xxx，所以判断为{错误类型}，建议处理方式为：{修改方式}
+因为阅读上下文第三文本块XXX，所以判断为{XX新层级}。因为第三文本块因xxx，所以判断为{错误类型}，建议处理方式为：{修改方式}
 如果文本无误，请回复：
-因为阅读上下文第三文本块XXX，所以判断为{是否为新层级}。因为第三文本块因没有四类错误，所以判断为{正确}。第三文本块不做任何修改。
+因为阅读上下文第三文本块XXX，所以判断为{XX新层级}。因为第三文本块因没有四类错误，所以判断为{正确}。第三文本块不做任何修改。
 
 
 
-举例情况（1）：开头是新层级且为字符错误；
+举例情况（1）：开头是段落新层级且为字符错误；
     {
         "text": "答：可以。根据文件规定：",
         "page_idx": 6
@@ -430,14 +433,14 @@ def build_prompt(instruction, input_data):
         "page_idx": 6
     },
     {
-        "text": "二、。增值税小规模纳税人适用 $3 \\%$ 征收率@的应税销售收入",
+        "text": "二、。增值税小规模纳税人适用3%征收率@的应税销售收入",
         "page_idx": 6
     },
     {
-        "text": "，减按 $1 \\%$ 征收率@征收增值税。",
+        "text": "，减按1%征收率@征收增值税。",
         "page_idx": 7
     },
-你应该回复：因为阅读上下文第三文本块带有广义标题特征，所以判断为{新层级}。因为第三文本块因含有不合理字符，所以判断为{文本错误}。建议处理方式为：{二、增值税小规模纳税人适用 $3 \\%$ 征收率的应税销售收入}
+你应该回复：因为阅读上下文第三文本块是正文段落内的叙述标题，所以判断为{段落新层级}。因为第三文本块因含有不合理字符，所以判断为{文本错误}。建议处理方式为：{二、增值税小规模纳税人适用3%征收率的应税销售收入。}
 
 举例情况（2）：开头非新层级且格式错误（开头为残句）
     {
@@ -445,11 +448,11 @@ def build_prompt(instruction, input_data):
         "page_idx": 6
     },
     {
-        "text": "二、。增值税小规模纳税人适用 $3 \\%$ 征收率@的应税销售收入",
+        "text": "二、。增值税小规模纳税人适用3%征收率@的应税销售收入",
         "page_idx": 6
     },
     {
-        "text": "，减按 $1 \\%$ 征收率@征收增值税。",
+        "text": "，减按1%征收率@征收增值税。",
         "page_idx": 7
     },
     {
@@ -477,7 +480,8 @@ def build_prompt(instruction, input_data):
     "page_idx": 248
   }
 ]
-你应该回复：因为阅读上下文第三文本块为这一层级的正文组成部分，所以判断为{非新层级}。因为第三文本块因含有多个文本块，所以判断为{需要拆分}。建议处理方式为：{通过物的不流动进行国际避税，主要有两种做法：<mark>一是变更公司组织形式以改变所得性质；<mark>二是利用延期纳税方式。}
+你应该回复：因为阅读上下文第三文本块为这一层级的正文组成部分，所以判断为{非新层级}。因为第三文本块因含有多个文本块，所以判断为{需要拆分}。建议处理方式为：{通过物的不流动进行国际避税，主要有两种做法：<mark>一是变更公司组织形式以改变所得性质；<mark>二是利用延期纳税方式。<mark>}
+**注意**如果后面的第四个文本块不会是新的层级，你需要在结尾标记上<mark>,从而告诉我们层级的结束位置！
 
 举例情况（4）：开头非新层级且信息错误（无效内容）
     {
@@ -485,7 +489,7 @@ def build_prompt(instruction, input_data):
         "page_idx": 6
     },
     {
-        "text": "二、。增值税小规模纳税人适用 $3 \\%$ 征收率@的应税销售收入",
+        "text": "二、。增值税小规模纳税人适用3%征收率@的应税销售收入",
         "page_idx": 6
     },
     {
@@ -493,7 +497,7 @@ def build_prompt(instruction, input_data):
         "page_idx": 7
     },
     {
-        "text": "，减按 $1 \\%$ 征收率@征收增值税。",
+        "text": "，减按1%征收率@征收增值税。",
         "page_idx": 7
     },
 你应该回复：因为阅读上下文第三文本块为这一层级的正文组成部分，所以判断为{非新层级}。因为第三文本块因是夹杂信息，所以判断为{信息错误}。建议处理方式为：{删除}
@@ -753,13 +757,15 @@ def process_qa_for_version_0(run_id: str) -> dict:
                 adjusted_item = parse_remark_and_adjust_data(ai_response, current_text, i, all_results)
                 # 将修正后的文本存储回结果中
                 all_results[i]["adjusted_text"] = adjusted_item["text"]
-                all_results[i]["is_title_marked"] = adjusted_item["is_title_marked"]
+                all_results[i]["level_type"] = adjusted_item["level_type"]
             else:
                 # 没有AI分析结果，保持原文本
                 all_results[i]["adjusted_text"] = current_text
-                all_results[i]["is_title_marked"] = False
+                all_results[i]["level_type"] = 0
         
         # 第二步：处理向前合并的情况（使用修正后的文本）
+        # 先收集所有需要向前合并的块，按索引排序
+        merge_operations = []
         for i, analysis in enumerate(all_results):
             ai_response = analysis["ai_response"]
             if "{向前合并}" in ai_response and "{删除}" in ai_response:
@@ -769,28 +775,63 @@ def process_qa_for_version_0(run_id: str) -> dict:
                     prev_index -= 1
                 
                 if prev_index >= 0:
-                    # 合并时用AI修正后的文本，如果修正后内容为空，则用原始内容
-                    prev_text = all_results[prev_index].get("adjusted_text", "").rstrip()
-                    current_text = analysis.get("adjusted_text", "").lstrip()
-                    if not current_text:
-                        # 如果修正后内容为空，尝试用原始内容
-                        current_text = analysis["item"].get("text", "").lstrip()
-                    # 直接拼接，不加空格
-                    merged_text = prev_text + current_text
-                    # 正则清理<mark>后所有空白和换行
-                    merged_text = re.sub(r'<mark>[\s\u3000]*', '<mark>', merged_text)
-                    all_results[prev_index]["adjusted_text"] = merged_text
-                    # 当前文本置空
-                    all_results[i]["adjusted_text"] = ""
-                    print(f"向前合并: 第{i}块文本合并到第{prev_index}块，合并后文本: {merged_text[:100]}...")
+                    merge_operations.append({
+                        "current_index": i,
+                        "target_index": prev_index,
+                        "current_text": analysis.get("adjusted_text", "").lstrip() or analysis["item"].get("text", "").lstrip()
+                    })
         
-        # 第三步：构建最终的处理数据
+        # 按目标索引排序，确保合并顺序正确（从后往前合并）
+        merge_operations.sort(key=lambda x: x["target_index"], reverse=True)
+        
+        # 执行合并操作
+        for merge_op in merge_operations:
+            current_index = merge_op["current_index"]
+            target_index = merge_op["target_index"]
+            current_text = merge_op["current_text"]
+            
+            # 获取目标文本块的内容
+            target_text = all_results[target_index].get("adjusted_text", "").rstrip()
+            
+            # 检查目标文本是否包含<mark>标记
+            if "<mark>" in target_text:
+                # 如果包含<mark>标记，将被合并的文本插入到最后一个<mark>之前
+                last_mark_pos = target_text.rfind("<mark>")
+                if last_mark_pos != -1:
+                    # 在最后一个<mark>之前插入被合并的文本
+                    merged_text = target_text[:last_mark_pos] + current_text + target_text[last_mark_pos:]
+                else:
+                    # 异常情况，直接拼接
+                    merged_text = target_text + current_text
+            else:
+                # 不包含<mark>标记，直接拼接
+                merged_text = target_text + current_text
+            
+            # 正则清理<mark>后所有空白和换行
+            merged_text = re.sub(r'<mark>[\s\u3000]*', '<mark>', merged_text)
+            all_results[target_index]["adjusted_text"] = merged_text
+            # 当前文本置空
+            all_results[current_index]["adjusted_text"] = ""
+            print(f"向前合并: 第{current_index}块文本合并到第{target_index}块，合并后文本: {merged_text[:100]}...")
+        
+        # 第三步：处理<mark>标记后的格式清理（移除层级调整逻辑）
+        print("处理<mark>标记后的格式清理...")
+        for i in range(len(all_results)):
+            current_text = all_results[i].get("adjusted_text", "")
+            
+            # 清理<mark>\n格式问题
+            if "<mark>\n" in current_text:
+                current_text = current_text.replace("<mark>\n", "<mark>")
+                all_results[i]["adjusted_text"] = current_text
+                print(f"第{i}块文本清理<mark>\\n格式")
+        
+        # 第四步：构建最终的处理数据
         processed_data = []
         for i, analysis in enumerate(all_results):
             current_item = analysis["item"]
             ai_response = analysis["ai_response"]
             adjusted_text = analysis.get("adjusted_text", "")  # 使用最终调整后的文本
-            is_title_marked = analysis.get("is_title_marked", False)
+            level_type = analysis.get("level_type", 0)
             
             # 最终清理：确保所有文本都没有<mark>后空白和换行
             if adjusted_text:
@@ -804,7 +845,7 @@ def process_qa_for_version_0(run_id: str) -> dict:
                     "text_level": current_item.get("text_level", 1),
                     "type": current_item.get("type", "正文"),
                     "block_index": current_item.get("block_index", 0),
-                    "is_title_marked": is_title_marked,
+                    "level_type": level_type,
                     "exclude_from_finetune": current_item.get("exclude_from_finetune", False),
                     "remark": ai_response,  # 将AI分析结果存储到remark字段
                     "original_text": current_item.get("text", "")  # 保存原始文本到original_text字段
@@ -817,7 +858,7 @@ def process_qa_for_version_0(run_id: str) -> dict:
                     "text_level": current_item.get("text_level", 1),
                     "type": current_item.get("type", ""),
                     "block_index": current_item.get("block_index", 0),
-                    "is_title_marked": is_title_marked,
+                    "level_type": level_type,
                     "exclude_from_finetune": current_item.get("exclude_from_finetune", False),
                     "remark": "",  # 非text类型remark为空
                     "original_text": current_item.get("text", "")  # 保存原始文本到original_text字段
@@ -852,73 +893,66 @@ def process_qa_for_version_0(run_id: str) -> dict:
 def parse_remark_and_adjust_data(ai_response: str, current_text: str, current_index: int, all_data: list) -> dict:
     """
     解析AI返回的remark，并根据分析结果调整数据
-    
-    Args:
-        ai_response (str): AI返回的分析结果
-        current_text (str): 当前文本内容（可能已经经过向前合并调整）
-        current_index (int): 当前数据在列表中的索引
-        all_data (list): 所有数据的列表
-        
-    Returns:
-        dict: 调整后的数据项
     """
     # 默认值
-    is_title_marked = False
+    level_type = 0  # 默认非新层级
     adjusted_text = current_text
-    
+
     try:
-        # 1. 解析层级判断
-        if "{新层级}" in ai_response:
-            is_title_marked = True
-        elif "{非新层级}" in ai_response:
-            is_title_marked = False
-        
-        # 2. 解析处理方式
+        # 层级类型判断
+        if "判断为{结构新层级}" in ai_response:
+            level_type = 1
+        elif "判断为{段落新层级}" in ai_response:
+            level_type = 2
+        elif "判断为{图表新层级}" in ai_response:
+            level_type = 3
+        elif "判断为{附注新层级}" in ai_response:
+            level_type = 4
+        elif "判断为{非新层级}" in ai_response:
+            level_type = 0
+        # 兼容老的"新层级"写法
+        elif "判断为{新层级}" in ai_response:
+            level_type = 1
+
+        # 2. 解析处理方式（原有逻辑不变）
         if "{删除}" in ai_response:
-            # 删除：置空文本
             adjusted_text = ""
         elif "{向前合并}" in ai_response and "{删除}" in ai_response:
-            # 向前合并：保持原文本，等待后续处理
             adjusted_text = current_text
         elif "{需要拆分}" in ai_response:
-            # 提取建议的处理方式
             pattern = r'建议处理方式为：\{(.*?)\}'
             match = re.search(pattern, ai_response, re.DOTALL)
             if match:
                 suggested_text = match.group(1).strip()
-                # 清理markdown标记，但保留<mark>标记
                 suggested_text = re.sub(r'\\\*\\\*', '**', suggested_text)
-                # 处理<mark>\n，将其替换为<mark>
-                suggested_text = suggested_text.replace('<mark>\n', '<mark>')
+                suggested_text = re.sub(r'<mark>[\s\u3000]*', '<mark>', suggested_text)
                 adjusted_text = suggested_text
         elif "{文本错误}" in ai_response:
-            # 提取建议的处理方式
-            pattern = r'建议处理方式为\{(.*?)\}'
-            match = re.search(pattern, ai_response, re.DOTALL)
+            # 匹配两种格式：带冒号和不带冒号
+            pattern1 = r'建议处理方式为：\{(.*?)\}'
+            pattern2 = r'建议处理方式为\{(.*?)\}'
+            
+            match = re.search(pattern1, ai_response, re.DOTALL)
+            if not match:
+                match = re.search(pattern2, ai_response, re.DOTALL)
+            
             if match:
                 suggested_text = match.group(1).strip()
-                # 清理markdown标记，但保留<mark>标记
                 suggested_text = re.sub(r'\\\*\\\*', '**', suggested_text)
-                # 处理<mark>\n，将其替换为<mark>
-                suggested_text = suggested_text.replace('<mark>\n', '<mark>')
+                suggested_text = re.sub(r'<mark>[\s\u3000]*', '<mark>', suggested_text)
                 adjusted_text = suggested_text
-                print(f"文本错误修正: '{current_text}' -> '{suggested_text}'")
-        
-        # 3. 其他情况（正确、格式错误等）保持原文本不变
         else:
             adjusted_text = current_text
-        
-        # 4. 对所有调整后的文本都进行<mark>\n清理
+
         if adjusted_text:
             adjusted_text = re.sub(r'<mark>[ \t\r\n]*', '<mark>', adjusted_text)
-            
+
     except Exception as e:
         print(f"解析remark时出错: {str(e)}")
-        # 解析失败时保持原样
-        is_title_marked = False
+        level_type = 0
         adjusted_text = current_text
-    
+
     return {
-        "is_title_marked": is_title_marked,
+        "level_type": level_type,
         "text": adjusted_text
     }

@@ -24,7 +24,7 @@ def insert_pdf_text_contents(run_id: str, contents: list, based_version: int = N
                 text_level = item.get("text_level", 0)
                 type_ = item.get("type", "")
                 block_index = item.get("block_index")
-                is_title_marked = item.get("is_title_marked", False)
+                level_type = item.get("level_type", 0)  # 替换is_title_marked为level_type
                 exclude_from_finetune = item.get("exclude_from_finetune", False)
                 remark = item.get("remark", "")
                 original_text = item.get("original_text", text)  # 如果没有提供original_text，使用text作为默认值
@@ -34,13 +34,13 @@ def insert_pdf_text_contents(run_id: str, contents: list, based_version: int = N
                     INSERT INTO pdf_json (
                         run_id, text, page_index, text_level, create_time,
                         version, type, block_index, based_version,
-                        is_title_marked, exclude_from_finetune, remark, original_text
+                        level_type, exclude_from_finetune, remark, original_text
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     run_id, text, page_index, text_level, create_time,
                     new_version, type_, block_index, based_version,
-                    is_title_marked, exclude_from_finetune, remark, original_text
+                    level_type, exclude_from_finetune, remark, original_text
                 ))
 
         conn.commit()
