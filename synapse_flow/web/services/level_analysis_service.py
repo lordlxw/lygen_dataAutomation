@@ -182,7 +182,8 @@ class LevelAnalysisService:
             "text": item_data["text"],
             "isTitleMarked": item_data["isTitleMarked"],
             "level": new_level,
-            "index": len(self.confirmed_levels)  # 记录在confirmed_levels中的索引
+            "index": len(self.confirmed_levels),  # 记录在confirmed_levels中的索引
+            "special_type": item_data.get("special_type")  # 添加special_type信息
         }
         
         # 更新层级路径栈
@@ -193,6 +194,8 @@ class LevelAnalysisService:
         self.level_path_stack.append(level_info)
         
         print(f"更新层级路径栈: {[node['level'] for node in self.level_path_stack]}")
+        print(f"更新层级路径栈索引: {[node['index'] for node in self.level_path_stack]}")
+        print(f"更新层级路径栈special_type: {[node.get('special_type', 'None') for node in self.level_path_stack]}")
     
     def get_context_path(self) -> List[Dict[str, Any]]:
         """
@@ -210,8 +213,45 @@ class LevelAnalysisService:
             print(f"DEBUG: 检测到'同属以往层级'，调用get_extended_context_path")
             return self.get_extended_context_path()
         
-        print(f"DEBUG: 使用正常的level_path_stack: {[node['level'] for node in self.level_path_stack]}")
-        return self.level_path_stack.copy()
+        # 正常情况：使用level_path_stack，但需要处理其中的"同属以往层级"
+        context_path = []
+        
+        for node in self.level_path_stack:
+            # 如果这个节点是"同属以往层级"，需要找到上一个不带"同属以往层级"标记的同级层级
+            if node.get("special_type") == "同属以往层级":
+                print(f"DEBUG: 发现'同属以往层级'节点，层级{node['level']}，索引{node['index']}")
+                # 找到上一个不带"同属以往层级"标记的同级层级
+                same_level_index = None
+                for i in range(node["index"] - 1, -1, -1):
+                    if (i < len(self.confirmed_levels) and 
+                        self.confirmed_levels[i]["level"] == node["level"] and
+                        self.confirmed_levels[i].get("special_type") != "同属以往层级"):
+                        same_level_index = i
+                        print(f"DEBUG: 找到同级层级，索引{i}")
+                        break
+                
+                if same_level_index is not None:
+                    # 添加找到的同级层级
+                    level_info = self.confirmed_levels[same_level_index]
+                    context_path.append({
+                        "text": level_info["text"],
+                        "isTitleMarked": level_info["isTitleMarked"],
+                        "level": level_info["level"],
+                        "index": same_level_index
+                    })
+                    print(f"DEBUG: 添加同级层级，索引{same_level_index}")
+                
+                # 也添加当前这个"同属以往层级"的节点
+                context_path.append(node)
+                print(f"DEBUG: 添加'同属以往层级'节点，索引{node['index']}")
+            else:
+                # 正常层级，直接添加
+                context_path.append(node)
+                print(f"DEBUG: 添加正常层级，索引{node['index']}")
+        
+        print(f"DEBUG: 使用处理后的level_path_stack: {[node['level'] for node in context_path]}")
+        print(f"DEBUG: 使用处理后的level_path_stack索引: {[node['index'] for node in context_path]}")
+        return context_path
     
     def get_extended_context_path(self) -> List[Dict[str, Any]]:
         """
@@ -484,7 +524,12 @@ class LevelAnalysisService:
                 current_context_path = self.current_context.copy()
                 
                 # 更新层级路径栈
-                self.update_level_path_stack(parsed_result['level'], item_data)
+                item_data_with_special = {
+                    "text": item_data["text"],
+                    "isTitleMarked": item_data["isTitleMarked"],
+                    "special_type": parsed_result["special_type"]
+                }
+                self.update_level_path_stack(parsed_result['level'], item_data_with_special)
                 
                 # 更新层级序列
                 self.level_sequence.append(parsed_result['level'])
@@ -595,7 +640,12 @@ class LevelAnalysisService:
                 actual_context_indices = [node['index'] for node in actual_context_path]
                 
                 # 更新层级路径栈（原有逻辑）
-                self.update_level_path_stack(parsed_result['level'], item_data)
+                item_data_with_special = {
+                    "text": item_data["text"],
+                    "isTitleMarked": item_data["isTitleMarked"],
+                    "special_type": parsed_result["special_type"]
+                }
+                self.update_level_path_stack(parsed_result['level'], item_data_with_special)
                 
                 # 新增：更新层级序列
                 self.level_sequence.append(parsed_result['level'])
