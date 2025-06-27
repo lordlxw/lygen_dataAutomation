@@ -1,0 +1,716 @@
+[
+  {
+    "original_data": {
+      "text": "增值税纳税人与扣缴义务人有着不同的基本定义与性质，实务中应当要加以区分。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": []
+  },
+  {
+    "original_data": {
+      "text": "（二）承包、承租与挂靠",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      0
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（1）同时满足以下两个条件的，以发包人为纳税人：<mark>①以发包人名义对外经营。  <mark>②由发包人承担相关法律责任。  <mark>（2）不同时满足上述两个条件的，以承包人为纳税人。<mark>",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      1
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（三）合并纳税",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      1,
+      2
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（1）服务(租赁不动产除外)或者无形资产（自然资源使用权除外)的销售方或者购买方在境内。<mark>（2）所销售或者租赁的不动产在境内。<mark>（3）所销售自然资源使用权的自然资源在境内。<mark>（4）财政部和国家税务总局规定的其他情形。但下列情形不属于在境内销售服务或者无形资产：<mark>（1）境外单位或者个人向境内单位或者个人销售完全在境外发生的服务。<mark>（2）境外单位或者个人向境内单位或者个人销售完全在境外使用的无形资产。<mark>（3）境外单位或者个人向境内单位或者个人出租完全在境外使用的有形动产。<mark>",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      3
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（4）财政部和国家税务总局规定的其他情形。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      3,
+      4
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（1）为出境的函件、包裹在境外提供的邮政服务、收派服务。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      3,
+      5
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（2）向境内单位或者个人提供的工程施工地点在境外的建筑服务、工程监理服务。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      3,
+      6
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（3）向境内单位或者个人提供的工程、矿产资源在境外的工程勘察勘探服务。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      3,
+      7
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（4）向境内单位或者个人提供的会议展览地点在境外的会议展览服务。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      3,
+      8
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第二节 增值税纳税人的分类",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      3,
+      9
+    ]
+  },
+  {
+    "original_data": {
+      "text": "一、增值税一般纳税人",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      10
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（一）一般纳税人定义",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头为前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头为前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      11
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（二）一般纳税人登记及管理",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      12
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（1）上述\"经营期\"是指根据《国家税务总局关于增值税一般纳税人登记管理若干事项的公告》国家税务总局公告2018年第6号，以下简称2018年第6号公告）的规定，在纳税人存续期内的连续经营期间，含未取得销售收人的月份或季度。例如，小规模纳税人A企业按季申报增值税纳税，2019年除第二季度未取得销售收入外，其他三个季度均发生了销售收入，并累计额超过了小规模纳税人应税销售额标准。因此，除《增值税一般纳税人登记管理办法》的不办理一般纳税人登记的情况外，纳税人应当向主管税务机关办理一般纳税人登记。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（1）《中华人民共和国增值税暂行条例实施细则》（以下简称《增值税暂行条例实施细则》)第二十九条规定，非企业性单位、不经常发生应税行为的企业可选择按照小规模纳税人纳税。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      14
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（2）根据《财政部国家税务总局关于全面推开营业税改征增值税试点的通知》（财税【2016】36号）附件1《营业税改征增值税试点实施办法》第三条的规定，年应税销售额超过规定标准但不经常发生应税行为的单位和个体工商户可选择按照小规模纳税人纳税。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      15
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（3）年应税销售额超过规定标准的其他个人。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      16
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（2）上述“纳税申报销售额”指纳税人自行申报的全部应征增值税销售额，其中包括免税销售额和税务机关代开发票销售额等。税销售额和税务机关代开发票销售额等。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      17
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（3）上述“稽查查补销售额”和“纳税评估调整销售额”是指查补企业税款计人申报当月（或当季)的销售额，不能算是税款发生所属期的销售额。例如，小规模纳税人A公司按季申报增值税纳税，主要经营纺织品的生产及销售(忽略其他情况),2019年全年发生应税销售额480万元，在第四季度税务机关对该企业进行稽查，查补了2018年度销售额80万元。对此，税务稽查查补的销售额80万元不计人2018年度所属期的销售额，应该计人2019年查补申报的第四季度的销售额内，2019年该公司实际发生应税销售额为560万元，超过《财政部税务总局关于统一增值税小规模纳税人标准的通知》财税【2018】33号)规定的“增值税小规模纳税人标准为年应征增值税销售额500万元及以下”的标准，应当向主管税务机关办理一般纳税人登记。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      18
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（4）《增值税一般纳税人登记管理办法》第二条规定，销售服务、无形资产或者不动产（以下简称应税行为)有扣除项目的纳税人，其应税行为年应税销售额按未扣除之前的销售额计算。纳税人偶然发生的销售无形资产、转让不动产的销售额，不计人应税行为年应税销售额。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      19
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（5）纳税人登记为一般纳税人后，不得转为小规模纳税人，国家税务总局另有规定的除外。例如，《国家税务总局关于小规模纳税人免征增值税政策有关征管问题的公告》（国家税务总局公告2019年第4号，以下简称2019年第4号公告）第五条规定，转登记日前连续12个月(以1个月为1个纳税期)或者连续4个季度(以1个季度为1个纳税期)累计销售额未超过500万元的一般纳税人，在2019年12月31日前，可选择转登记为小规模纳税人。又如，《国家税务总局关于明确二手车经销等增值税征管问题的公告》（国家税务总局公告2020年第9号)第六条规定，一般纳税人符合以下条件的，在2020年12月31日前，可选择转登记为小规模纳税人，转登记前连续12个月（以一个月为一个纳税期)或连续四个季度（以一个季度为一个纳税期)累计销售额未超过500万元。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      20
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（三）办理一般纳税人登记程序",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      21
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（四）办理一般纳税人登记时限",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级四}。",
+    "parsed_result": {
+      "level": 4,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级四}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      22
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（五）特殊行业一般纳税人管理",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级五}。",
+    "parsed_result": {
+      "level": 5,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级五}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      22,
+      23
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（六）增值税一般纳税人迁移管理",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级六}。",
+    "parsed_result": {
+      "level": 6,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级六}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      22,
+      23,
+      24
+    ]
+  },
+  {
+    "original_data": {
+      "text": "【案例1-1】A工业企业为增值税一般纳税人，因经营地点变动该公司按照相关规定在原登记税务机关办理注销登记后，在迁达地重新办理了税务登记，其增值税一般纳税人资格予以保留。在迁移前该公司尚未抵扣的进项税额还有100万元，根据《国家税务总局关于一般纳税人迁移有关增值税问题的公告》（国家税务总局公告2011年第71号）第一条的规定，增值税一般纳税人因住所、经营地点变动，按照相关规定，在市场监督管理部门作变更登记处理，但因涉及改变税务登记机关，需要办理注销税务登记并重新办理税务登记的，在迁达地重新办理税务登记后，其增值税一般纳税人资格予以保留，办理注销税务登记前尚未抵扣的进项税额允许继续抵扣。因此，该公司迁移前尚未抵扣的100万元期末留抵税额可以在迁移后继续抵扣。",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      22,
+      23,
+      24,
+      25
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（七）风险管理",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      13,
+      26
+    ]
+  },
+  {
+    "original_data": {
+      "text": "二、增值税小规模纳税人",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      27
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（一）小规模纳税人标准",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且与上一级同为结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      28
+    ]
+  },
+  {
+    "original_data": {
+      "text": "条文理解<mark>（1）按照《增值税暂行条例》的规定，我国将增值税纳税人分为一般纳税人和小规模纳税人两种，划分标准按照纳税人年应税销售额。只要年应税销售额超过小规模纳税人标准，原则上就应该申请认定为一般纳税人，但对于自然人，仍然允许继续按小规模纳税人纳税。现实生活中，一个自然人也可能偶然发生应税行为，销售额有高有低，如果一律要求其认定为一般纳税人，那么将大大地扩大增值税征收范围，使税收征管的网络扩张到全社会所有角落，这就有悖于征税的初衷，增加社会运行成本。同时要求每个自然人都按照一般纳税人的申报方法去申报缴纳增值税也不现实。<mark>（2)在现实生活中，非企业单位、不经常发生应税行为的企业的经营行为与其他纳税人相比，没有较大的差别，要求这些人成为一般纳税人不利于其参与市场竞争，为保证税收政策的公允，这两类纳税人可以选择成为一般纳税人或小规模纳税人。<mark>",
+      "isTitleMarked": "context level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      29
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（二）小规模纳税人管理",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      29,
+      30
+    ]
+  },
+  {
+    "original_data": {
+      "text": "第三节 增值税征税范围",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      31
+    ]
+  },
+  {
+    "original_data": {
+      "text": "一、一般规定",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      32
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（一）销售货物",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      33
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（二）提供加工和修理修配劳务",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      34
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（三）销售服务",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      35
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（四）销售无形资产",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      36
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（五）销售不动产",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      37
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（六）进口货物",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      38
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（七）非经营活动的界定",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+    "parsed_result": {
+      "level": 2,
+      "reasoning": "因为目标文本开头是前文具有的一种旧层级格式，且是段落层级回到结构层级，所以判断为{层级二}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      39
+    ]
+  },
+  {
+    "original_data": {
+      "text": "条文理解理解上述规定应从以下四个方面掌握：",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      40
+    ]
+  },
+  {
+    "original_data": {
+      "text": "（1）纳税人只有发生有偿提供应税服务、有偿转让无形资产或者不动产的行为才能征",
+      "isTitleMarked": "section level"
+    },
+    "ai_response": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+    "parsed_result": {
+      "level": 3,
+      "reasoning": "因为目标文本开头为前文不具有的一种新层级格式，且是上一级结构层级下的第一个段落层级，所以判断为{层级三}。",
+      "is_special_case": false,
+      "special_type": null
+    },
+    "context_path": [
+      40,
+      41
+    ]
+  }
+]
