@@ -200,7 +200,58 @@ class LevelAnalysisService:
         返回递归向上路径中的节点
         注意：这里返回的是处理当前文本之前的路径，不包含当前文本
         """
+        print(f"DEBUG: get_context_path被调用，confirmed_levels长度: {len(self.confirmed_levels)}")
+        if self.confirmed_levels:
+            print(f"DEBUG: 最后一个层级的special_type: {self.confirmed_levels[-1].get('special_type', 'None')}")
+        
+        # 检查上一个结果是否是"同属以往层级"
+        if self.confirmed_levels and self.confirmed_levels[-1].get("special_type") == "同属以往层级":
+            # 如果是"同属以往层级"，需要带上更早的层级信息
+            print(f"DEBUG: 检测到'同属以往层级'，调用get_extended_context_path")
+            return self.get_extended_context_path()
+        
+        print(f"DEBUG: 使用正常的level_path_stack: {[node['level'] for node in self.level_path_stack]}")
         return self.level_path_stack.copy()
+    
+    def get_extended_context_path(self) -> List[Dict[str, Any]]:
+        """
+        获取扩展的上下文路径
+        当上一个结果是"同属以往层级"时，需要带上更早的层级信息
+        """
+        extended_path = []
+        
+        print(f"DEBUG: 开始扩展上下文路径，confirmed_levels长度: {len(self.confirmed_levels)}")
+        print(f"DEBUG: confirmed_levels: {[(i, level.get('special_type', 'None')) for i, level in enumerate(self.confirmed_levels)]}")
+        
+        # 当上一个结果是"同属以往层级"时，应该带上：
+        # 1. 之前所有层级（按时间顺序）
+        # 2. 当前这个"同属以往层级"的层级
+        
+        # 遍历所有confirmed_levels（除了最后一个，因为最后一个就是"同属以往层级"）
+        for i in range(len(self.confirmed_levels) - 1):
+            level_info = self.confirmed_levels[i]
+            print(f"DEBUG: 添加索引{i}: special_type={level_info.get('special_type', 'None')}")
+            extended_path.append({
+                "text": level_info["text"],
+                "isTitleMarked": level_info["isTitleMarked"],
+                "level": level_info["level"],
+                "index": i
+            })
+        
+        # 再加上当前这个"同属以往层级"的层级
+        if self.confirmed_levels:
+            last_level = self.confirmed_levels[-1]
+            print(f"DEBUG: 添加最后一个层级，索引{len(self.confirmed_levels) - 1}")
+            extended_path.append({
+                "text": last_level["text"],
+                "isTitleMarked": last_level["isTitleMarked"],
+                "level": last_level["level"],
+                "index": len(self.confirmed_levels) - 1
+            })
+        
+        print(f"DEBUG: 扩展上下文路径: {[node['level'] for node in extended_path]}")
+        print(f"DEBUG: 扩展上下文路径索引: {[node['index'] for node in extended_path]}")
+        return extended_path
     
     def build_level_prompt(self, target_item: Dict[str, Any]) -> tuple:
         """构建层级判断的prompt"""
@@ -538,8 +589,10 @@ class LevelAnalysisService:
             if parsed_result['level'] is not None:
                 current_index = len(self.level_sequence)  # 当前元素在层级序列中的索引
                 
-                # 获取当前项的上文路径（在更新之前）
-                current_context_path = self.current_context.copy()
+                # 获取实际传给AI的上下文路径（在更新之前）
+                actual_context_path = self.get_context_path()
+                # 将实际上下文路径转换为索引列表
+                actual_context_indices = [node['index'] for node in actual_context_path]
                 
                 # 更新层级路径栈（原有逻辑）
                 self.update_level_path_stack(parsed_result['level'], item_data)
@@ -558,7 +611,7 @@ class LevelAnalysisService:
                     "reasoning": parsed_result["reasoning"],
                     "is_special_case": parsed_result["is_special_case"],
                     "special_type": parsed_result["special_type"],
-                    "context_path": current_context_path  # 使用更新前的上下文路径
+                    "context_path": actual_context_indices  # 使用实际传给AI的上下文路径
                 }
                 self.confirmed_levels.append(confirmed_level_info)
             
@@ -572,7 +625,7 @@ class LevelAnalysisService:
                     "reasoning": parsed_result["reasoning"],
                     "is_special_case": parsed_result["is_special_case"],
                     "special_type": parsed_result["special_type"],
-                    "context_path": current_context_path if parsed_result['level'] is not None else [],
+                    "context_path": actual_context_indices if parsed_result['level'] is not None else [],
                     "ai_response": ai_response
                 },
                 "prompt_details": {
@@ -592,7 +645,7 @@ class LevelAnalysisService:
                 "is_special_case": parsed_result["is_special_case"],
                 "special_type": parsed_result["special_type"],
                 "ai_response": ai_response,
-                "context_path": current_context_path if parsed_result['level'] is not None else []  # 使用更新前的上下文路径
+                "context_path": actual_context_indices if parsed_result['level'] is not None else []  # 使用实际传给AI的上下文路径
             }
             
         except Exception as e:
