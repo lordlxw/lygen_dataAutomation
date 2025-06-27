@@ -11,7 +11,7 @@ from synapse_flow.web.services.level_analysis_service import LevelAnalysisServic
 
 def load_test_data():
     """加载测试数据"""
-    json_file = "synapse_flow/例子/output.json"
+    json_file = "synapse_flow/例子/output200.json"
     
     if not os.path.exists(json_file):
         print(f"错误：找不到文件 {json_file}")
@@ -208,6 +208,9 @@ def main():
     print(f"总的层级序列: {' → '.join(map(str, total_level_sequence))}")
     print(f"层级序列长度: {len(total_level_sequence)}")
     print(f"层级上下文路径数量: {len(hierarchy_info['context_paths'])}")
+    
+    print(f"\n层级结构可视化:")
+    service.print_tree_view()
     
     print(f"\n测试完成！")
     print(f"详细日志: {service.get_log_file_path()}")

@@ -199,7 +199,7 @@ class LevelAnalysisService:
     
     def get_context_path(self) -> List[Dict[str, Any]]:
         """
-        获取当前活跃的层级路径
+        获取当前活跃的层级路径（递归父级路径）
         返回递归向上路径中的节点
         注意：这里返回的是处理当前文本之前的路径，不包含当前文本
         """
@@ -210,6 +210,7 @@ class LevelAnalysisService:
                 for i in range(node["index"]-1, -1, -1):
                     if (self.confirmed_levels[i]["level"] == node["level"] and
                         self.confirmed_levels[i].get("special_type") != "同属以往层级"):
+                        # 只补充一次
                         context_path.append({
                             "text": self.confirmed_levels[i]["text"],
                             "isTitleMarked": self.confirmed_levels[i]["isTitleMarked"],
@@ -217,6 +218,7 @@ class LevelAnalysisService:
                             "index": i
                         })
                         break
+            # 正常递归路径
             context_path.append(node)
         return context_path
     
