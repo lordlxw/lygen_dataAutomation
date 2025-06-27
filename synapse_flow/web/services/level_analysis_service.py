@@ -203,54 +203,21 @@ class LevelAnalysisService:
         返回递归向上路径中的节点
         注意：这里返回的是处理当前文本之前的路径，不包含当前文本
         """
-        print(f"DEBUG: get_context_path被调用，confirmed_levels长度: {len(self.confirmed_levels)}")
-        if self.confirmed_levels:
-            print(f"DEBUG: 最后一个层级的special_type: {self.confirmed_levels[-1].get('special_type', 'None')}")
-        
-        # 检查上一个结果是否是"同属以往层级"
-        if self.confirmed_levels and self.confirmed_levels[-1].get("special_type") == "同属以往层级":
-            # 如果是"同属以往层级"，需要带上更早的层级信息
-            print(f"DEBUG: 检测到'同属以往层级'，调用get_extended_context_path")
-            return self.get_extended_context_path()
-        
-        # 正常情况：使用level_path_stack，但需要处理其中的"同属以往层级"
         context_path = []
-        
         for node in self.level_path_stack:
-            # 如果这个节点是"同属以往层级"，需要找到上一个不带"同属以往层级"标记的同级层级
+            # 如果是同属以往层级，补充同级的上一个非特殊节点
             if node.get("special_type") == "同属以往层级":
-                print(f"DEBUG: 发现'同属以往层级'节点，层级{node['level']}，索引{node['index']}")
-                # 找到上一个不带"同属以往层级"标记的同级层级
-                same_level_index = None
-                for i in range(node["index"] - 1, -1, -1):
-                    if (i < len(self.confirmed_levels) and 
-                        self.confirmed_levels[i]["level"] == node["level"] and
+                for i in range(node["index"]-1, -1, -1):
+                    if (self.confirmed_levels[i]["level"] == node["level"] and
                         self.confirmed_levels[i].get("special_type") != "同属以往层级"):
-                        same_level_index = i
-                        print(f"DEBUG: 找到同级层级，索引{i}")
+                        context_path.append({
+                            "text": self.confirmed_levels[i]["text"],
+                            "isTitleMarked": self.confirmed_levels[i]["isTitleMarked"],
+                            "level": self.confirmed_levels[i]["level"],
+                            "index": i
+                        })
                         break
-                
-                if same_level_index is not None:
-                    # 添加找到的同级层级
-                    level_info = self.confirmed_levels[same_level_index]
-                    context_path.append({
-                        "text": level_info["text"],
-                        "isTitleMarked": level_info["isTitleMarked"],
-                        "level": level_info["level"],
-                        "index": same_level_index
-                    })
-                    print(f"DEBUG: 添加同级层级，索引{same_level_index}")
-                
-                # 也添加当前这个"同属以往层级"的节点
-                context_path.append(node)
-                print(f"DEBUG: 添加'同属以往层级'节点，索引{node['index']}")
-            else:
-                # 正常层级，直接添加
-                context_path.append(node)
-                print(f"DEBUG: 添加正常层级，索引{node['index']}")
-        
-        print(f"DEBUG: 使用处理后的level_path_stack: {[node['level'] for node in context_path]}")
-        print(f"DEBUG: 使用处理后的level_path_stack索引: {[node['index'] for node in context_path]}")
+            context_path.append(node)
         return context_path
     
     def get_extended_context_path(self) -> List[Dict[str, Any]]:
