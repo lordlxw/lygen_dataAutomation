@@ -818,6 +818,24 @@ class LevelAnalysisService:
             return self.context_paths[index].copy()
         return []
 
+    def print_tree_view(self):
+        """
+        打印树状缩进的层级结构（带特殊标记）
+        """
+        stack = []
+        for i, node in enumerate(self.confirmed_levels):
+            level = node["level"]
+            text = node["text"][:40] + ("..." if len(node["text"]) > 40 else "")
+            special = node.get("special_type")
+            marker = "⚠" if special == "同属以往层级" else "✓"
+            special_info = f" ({special})" if special else ""
+            # 维护栈
+            while stack and self.confirmed_levels[stack[-1]]["level"] >= level:
+                stack.pop()
+            indent = "  " * len(stack)
+            print(f"{indent}{marker} 层级{level}: {text}{special_info}")
+            stack.append(i)
+
 def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     更新pdf_json表中的层级信息
@@ -834,6 +852,9 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
         
         # 处理数据
         results = level_service.process_batch(data_list)
+        
+        # 新增：调试用，输出树状结构
+        level_service.print_tree_view()
         
         # 更新数据库
         conn = get_pg_conn()
