@@ -659,8 +659,7 @@ def process_qa_for_version_0(run_id: str) -> dict:
                 
                 # 添加当前文本块（第三个）
                 current_text = current_item.get("text", "").strip()
-                if not current_text:  # 如果text为空
-                    current_text = "(此text不是有效文本，不需要参与判断)"
+                # 当前文本块遇到空时保持为空，不加占位符
                 context_data.append({
                     "text": current_text,
                     "page_idx": current_item.get("page_index", 0)
@@ -673,8 +672,7 @@ def process_qa_for_version_0(run_id: str) -> dict:
                     next_type = next_item.get("type", "正文")
                     if next_type.lower() == "text" or next_type == "正文":
                         next_text = next_item.get("text", "").strip()
-                        if not next_text:  # 如果text为空
-                            next_text = "(此text不是有效文本，不需要参与判断)"
+                        # 后一个文本块遇到空时保持为空，不加占位符
                         context_data.append({
                             "text": next_text,
                             "page_idx": next_item.get("page_index", 0)

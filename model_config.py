@@ -25,7 +25,7 @@ MODEL_CONFIGS = {
         "display_name": "层级分析模型",
         "base_model_path": "/data/training/model/Meta-Llama-3.1-8B-Instruct",
         "lora_path": "/home/liuxinwei/Models/层级训练",  # 你的新模型路径
-        "lora_module_name": "level_analysis_model",
+        "lora_module_name": "llama3.1_8b",
         "port": 8202,
         "container_name": "vllm_level",
         "description": "用于层级分析的微调模型"

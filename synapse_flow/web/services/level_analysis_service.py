@@ -1000,36 +1000,88 @@ def start_level_vllm_service():
     启动专用于层级分析的vLLM服务（如已启动则跳过）
     """
     import requests
+    import subprocess
+    import time
+
+    # 1. 检查端口服务是否已启动
     try:
-        resp = requests.get("http://localhost:8202/v1/models", timeout=5)  # 使用/v1/models检查服务状态
+        resp = requests.get("http://localhost:8202/v1/models", timeout=5)
         if resp.status_code == 200:
             print("层级分析vLLM服务已在运行，端口8202")
             return True
     except Exception:
         pass
 
-    # 停止同名容器（防止冲突）
-    subprocess.run(["docker", "stop", "vllm_level"], capture_output=True)
-    subprocess.run(["docker", "rm", "vllm_level"], capture_output=True)
+    # 2. 检查容器是否存在（包括已停止的）
+    result = subprocess.run(
+        ["docker", "ps", "-a", "-q", "-f", "name=vllm_level"],
+        stdout=subprocess.PIPE, text=True
+    )
+    
+    if result.stdout.strip():
+        # 容器存在，检查是否在运行
+        running_result = subprocess.run(
+            ["docker", "ps", "-q", "-f", "name=vllm_level"],
+            stdout=subprocess.PIPE, text=True
+        )
+        if running_result.stdout.strip():
+            print("vllm_level 容器已在运行，但服务未响应，建议手动检查容器日志。")
+            return False
+        else:
+            # 容器存在但未运行，尝试启动
+            print("尝试启动 vllm_level 容器...")
+            subprocess.run(["docker", "start", "vllm_level"])
+    else:
+        # 容器不存在，需要创建
+        print("vllm_level 容器不存在，自动创建...")
+        
+        # 获取模型配置
+        model_config = get_model_config("level_model")
+        if not model_config:
+            print("❌ 无法获取 level_model 配置")
+            return False
+        
+        # 构建 docker run 命令
+        cmd = [
+            "docker", "run",
+            "--gpus", "all",
+            "-v", "/data/.cache/vllm:/root/.cache/vllm",
+            "-v", "/data/.cache/huggingface:/root/.cache/huggingface", 
+            "-v", "/data/training/model:/root/model",
+            "-v", f"{os.path.dirname(model_config['lora_path'])}:/root/lora",
+            f"-p", f"{model_config['port']}:8000",
+            "--ipc=host",
+            "-d",
+            f"--name", model_config["container_name"],
+            "vllm/vllm-openai:latest",
+            "--enable-lora",
+            f"--lora-modules", f"{model_config['lora_module_name']}=/root/lora/{os.path.basename(model_config['lora_path'])}",
+            "--model", model_config["base_model_path"],
+            "--tensor-parallel-size", "8"
+        ]
+        
+        print(f"执行命令: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print(f"❌ 创建容器失败: {result.stderr}")
+            return False
+        
+        print("✅ vllm_level 容器创建成功")
 
-    # 启动新容器，LoRA路径为 /root/lora
-    cmd = [
-        "docker", "run",
-        "--gpus", "all",
-        "-v", "/data/.cache/vllm:/root/.cache/vllm",
-        "-v", "/data/.cache/huggingface:/root/.cache/huggingface",
-        "-v", "/data/training/model:/root/model",
-        "-v", "/home/liuxinwei/Models/层级训练:/root/lora",
-        "-p", "8202:8000",
-        "--ipc=host",
-        "-d",
-        "--name", "vllm_level",
-        "vllm/vllm-openai:latest",
-        "--enable-lora",
-        f"--lora-modules", f"llama3.1_8b=/root/lora",
-        "--model", "/root/model/Meta-Llama-3.1-8B-Instruct",
-        "--tensor-parallel-size", "8"
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    print("启动层级分析vLLM服务结果:", result.stdout, result.stderr)
-    return result.returncode == 0 
+    # 4. 等待服务端口可用（延长等待时间到5分钟）
+    print("等待服务启动（最多5分钟）...")
+    for i in range(30):  # 30次，每次10秒，总共5分钟
+        try:
+            resp = requests.get("http://localhost:8202/v1/models", timeout=3)
+            if resp.status_code == 200:
+                print("✅ vLLM服务已成功启动")
+                return True
+        except Exception:
+            pass
+        time.sleep(10)
+        if (i + 1) % 6 == 0:  # 每分钟打印一次进度
+            print(f"等待中... ({i+1}/30)")
+    
+    print("❌ vLLM服务启动失败，请检查容器日志！")
+    return False 
