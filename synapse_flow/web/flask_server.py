@@ -484,9 +484,24 @@ def get_pdf_json():
 # if __name__ == '__main__':
 #     app.run(debug=True, host='0.0.0.0', port=6667)
 if __name__ == '__main__':
+    import argparse
+    import os
+    
+    # 创建命令行参数解析器
+    parser = argparse.ArgumentParser(description='SynapseFlow Flask Server')
+    parser.add_argument('--port', type=int, default=6667, help='服务器端口号 (默认: 6667)')
+    parser.add_argument('--host', type=str, default='0.0.0.0', help='服务器主机地址 (默认: 0.0.0.0)')
+    parser.add_argument('--debug', action='store_true', help='启用调试模式')
+    args = parser.parse_args()
+    
+    print(f"[INFO] 启动SynapseFlow Flask服务器")
+    print(f"[INFO] 主机: {args.host}")
+    print(f"[INFO] 端口: {args.port}")
+    print(f"[INFO] 调试模式: {args.debug}")
+    
     print("[DEBUG] 当前所有路由：")
     for rule in app.url_map.iter_rules():
         print(rule)
         
-    app.run(host='0.0.0.0', port=6667)
+    app.run(host=args.host, port=args.port, debug=args.debug)
 
