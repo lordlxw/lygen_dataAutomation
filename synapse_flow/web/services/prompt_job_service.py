@@ -59,7 +59,7 @@ def start_vllm_service():
         "--enable-lora",
         f"--lora-modules", f"llama3.1_8b=/root/lora/20250604/checkpoint-1005",
         "--model", "/root/model/Meta-Llama-3.1-8B-Instruct",
-        "--tensor-parallel-size", "8"
+        "--tensor-parallel-size", "4"
     ]
     
     try:
