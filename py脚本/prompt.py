@@ -134,7 +134,7 @@ def build_prompt(example):
     input_data = json.loads(example['input'])
     input_text = json.dumps(input_data, ensure_ascii=False, indent=2)
     instruction_text = f"需要你回答的问题是：{example['instruction']}"
-    input_text = f"需要分析的这段语句如下：{input_text}"
+    input_text = f"需要分析的这段语句是：{input_text}"
     prompt = f"{instruction_text}\n{input_text}\n请根据问题要求与问题进行回答。"
     return instruction_template, prompt
 

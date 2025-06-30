@@ -385,7 +385,8 @@ class LevelAnalysisService:
         truncated_target_text = truncate_text(target_item["text"])
         target_info = f"请问{target_type}： \"{truncated_target_text}\",是第几层级的开头内容？"
         
-        user_prompt = context_info + target_info
+        # 按照新格式构建user_prompt
+        user_prompt = f"需要分析的这段语句是:\"{context_info}{target_info}\"\n请根据问题要求与问题进行回答"
         
         return system_prompt, user_prompt
     
