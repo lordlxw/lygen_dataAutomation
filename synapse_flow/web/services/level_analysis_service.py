@@ -1122,7 +1122,7 @@ def start_level_vllm_service():
             "--enable-lora",
             f"--lora-modules", f"{model_config['lora_module_name']}=/root/lora",
             "--model", model_config["base_model_path"],
-            "--tensor-parallel-size", "8"
+            "--tensor-parallel-size", "4"
         ]
         
         print(f"执行命令: {' '.join(cmd)}")
