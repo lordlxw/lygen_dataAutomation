@@ -574,17 +574,77 @@ class LevelAnalysisService:
             
             # 检查vLLM服务状态
             if not self.check_vllm_service_status():
-                print("vLLM服务不可用，跳过当前处理")
+                print("vLLM服务不可用，使用默认层级1")
+                # 当vLLM服务不可用时，使用默认层级1
+                parsed_result = {
+                    "level": 1,
+                    "reasoning": "vLLM服务不可用，使用默认层级1",
+                    "is_special_case": False,
+                    "special_type": None
+                }
+                
+                # 更新层级路径栈、层级序列和层级上下文传递
+                current_index = len(self.level_sequence)  # 当前元素在层级序列中的索引
+                actual_context_path = self.get_context_path()
+                actual_context_indices = [node['index'] for node in actual_context_path]
+                
+                # 更新层级路径栈
+                item_data_with_special = {
+                    "text": item_data["text"],
+                    "isTitleMarked": item_data["isTitleMarked"],
+                    "special_type": parsed_result["special_type"]
+                }
+                self.update_level_path_stack(parsed_result['level'], item_data_with_special)
+                
+                # 更新层级序列
+                self.level_sequence.append(parsed_result['level'])
+                
+                # 更新层级上下文传递
+                self.update_hierarchical_context(parsed_result['level'], current_index)
+                
+                # 添加到已确认层级列表
+                confirmed_level_info = {
+                    "text": item_data["text"],
+                    "isTitleMarked": item_data["isTitleMarked"],
+                    "level": parsed_result["level"],
+                    "reasoning": parsed_result["reasoning"],
+                    "is_special_case": parsed_result["is_special_case"],
+                    "special_type": parsed_result["special_type"],
+                    "context_path": actual_context_indices
+                }
+                self.confirmed_levels.append(confirmed_level_info)
+                
+                # 记录处理完成
+                self.log_step("处理完成", {
+                    "final_result": {
+                        "id": item_data.get("id"),
+                        "text": item_data["text"],
+                        "isTitleMarked": item_data["isTitleMarked"],
+                        "level": parsed_result["level"],
+                        "reasoning": parsed_result["reasoning"],
+                        "is_special_case": parsed_result["is_special_case"],
+                        "special_type": parsed_result["special_type"],
+                        "context_path": actual_context_indices,
+                        "ai_response": "vLLM服务不可用，使用默认层级1"
+                    },
+                    "prompt_details": {
+                        "system_prompt": "vLLM服务不可用",
+                        "user_prompt": "vLLM服务不可用",
+                        "messages": []
+                    }
+                })
+                
+                # 返回处理结果
                 return {
                     "id": item_data.get("id"),
                     "text": item_data["text"],
                     "isTitleMarked": item_data["isTitleMarked"],
-                    "level": None,
-                    "reasoning": "vLLM服务不可用",
-                    "is_special_case": False,
-                    "special_type": None,
-                    "ai_response": "",
-                    "context_path": []
+                    "level": parsed_result["level"],
+                    "reasoning": parsed_result["reasoning"],
+                    "is_special_case": parsed_result["is_special_case"],
+                    "special_type": parsed_result["special_type"],
+                    "ai_response": "vLLM服务不可用，使用默认层级1",
+                    "context_path": actual_context_indices
                 }
             
             # 调用API
@@ -947,6 +1007,10 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                 for row in rows:
                     record_id, user_modified_text, user_modified_level = row
                     
+                    # 跳过user_modified_text为空的记录
+                    if not user_modified_text or user_modified_text.strip() == "":
+                        continue
+                    
                     # 根据user_modified_level确定isTitleMarked
                     if user_modified_level == 1:
                         is_title_marked = "section level"
@@ -1049,14 +1113,14 @@ def start_level_vllm_service():
             "-v", "/data/.cache/vllm:/root/.cache/vllm",
             "-v", "/data/.cache/huggingface:/root/.cache/huggingface", 
             "-v", "/data/training/model:/root/model",
-            "-v", f"{os.path.dirname(model_config['lora_path'])}:/root/lora",
+            "-v", f"{model_config['lora_path']}:/root/lora",
             f"-p", f"{model_config['port']}:8000",
             "--ipc=host",
             "-d",
             f"--name", model_config["container_name"],
             "vllm/vllm-openai:latest",
             "--enable-lora",
-            f"--lora-modules", f"{model_config['lora_module_name']}=/root/lora/{os.path.basename(model_config['lora_path'])}",
+            f"--lora-modules", f"{model_config['lora_module_name']}=/root/lora",
             "--model", model_config["base_model_path"],
             "--tensor-parallel-size", "8"
         ]
