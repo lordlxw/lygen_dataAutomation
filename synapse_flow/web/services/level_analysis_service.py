@@ -1020,7 +1020,7 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                 
                 # 使用获取到的version查询pdf_json表
                 cur.execute("""
-                    SELECT id, user_modified_text, user_modified_level
+                    SELECT id, text, user_modified_level
                     FROM pdf_json
                     WHERE run_id = %s AND version = %s 
                     AND user_modified_level IN (1, 2)
@@ -1042,10 +1042,10 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                 
                 # 转换为API格式
                 for row in rows:
-                    record_id, user_modified_text, user_modified_level = row
+                    record_id, text, user_modified_level = row
                     
-                    # 跳过user_modified_text为空的记录
-                    if not user_modified_text or user_modified_text.strip() == "":
+                    # 跳过text为空的记录
+                    if not text or text.strip() == "":
                         continue
                     
                     # 根据user_modified_level确定isTitleMarked
@@ -1059,7 +1059,7 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                     
                     data_list.append({
                         "id": record_id,
-                        "text": user_modified_text,
+                        "text": text,
                         "isTitleMarked": is_title_marked
                     })
                 
