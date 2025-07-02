@@ -66,6 +66,7 @@ class LevelAnalysisService:
                     "special_type": data["final_result"]["special_type"]
                 },
                 "context_path": data["final_result"]["context_path"],
+                "current_index": len(self.confirmed_levels) - 1 if self.confirmed_levels else -1,  # 新增：当前记录在confirmed_levels中的索引
                 "model_info": {
                     "model_name": "llama3.1_8b",
                     "base_model": "Meta-Llama-3.1-8B-Instruct",
@@ -464,6 +465,20 @@ class LevelAnalysisService:
     
     def process_single_item(self, item_data: Dict[str, Any]) -> Dict[str, Any]:
         """处理单个数据项的层级判断"""
+        # 新增：空文本直接跳过
+        if not item_data.get("text") or item_data["text"].strip() == "":
+            print("跳过空文本块")
+            return {
+                "id": item_data.get("id"),
+                "text": item_data.get("text", ""),
+                "isTitleMarked": item_data.get("isTitleMarked"),
+                "level": None,
+                "reasoning": "文本为空，未处理",
+                "is_special_case": False,
+                "special_type": None,
+                "ai_response": "",
+                "context_path": []
+            }
         try:
             # 获取调用AI之前的context_path
             context_path_before = self.get_context_path()
@@ -746,6 +761,8 @@ class LevelAnalysisService:
     
     def process_batch(self, data_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """批量处理数据列表"""
+        # 新增：批量前过滤空文本
+        data_list = [item for item in data_list if item.get("text") and item["text"].strip() != ""]
         results = []
         
         for i, item_data in enumerate(data_list):
@@ -981,21 +998,41 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
         
         try:
             with conn.cursor() as cur:
-                # 查询version=1且user_modified_level为1或2的数据，按id排序
+                # 首先从pdf_info表获取completed_version
+                cur.execute("""
+                    SELECT completed_version
+                    FROM pdf_info
+                    WHERE run_id = %s
+                """, (run_id,))
+                
+                version_result = cur.fetchone()
+                if not version_result:
+                    return {
+                        "status": "error",
+                        "message": f"未找到run_id {run_id} 在pdf_info表中的记录",
+                        "total_processed": 0,
+                        "updated_count": 0,
+                        "results": []
+                    }
+                
+                version = version_result[0]
+                print(f"从pdf_info表获取到version: {version}")
+                
+                # 使用获取到的version查询pdf_json表
                 cur.execute("""
                     SELECT id, user_modified_text, user_modified_level
                     FROM pdf_json
-                    WHERE run_id = %s AND version = 1 
+                    WHERE run_id = %s AND version = %s 
                     AND user_modified_level IN (1, 2)
                     ORDER BY id ASC
-                """, (run_id,))
+                """, (run_id, version))
                 
                 rows = cur.fetchall()
                 
                 if not rows:
                     return {
                         "status": "error",
-                        "message": f"未找到run_id {run_id} 的version=1数据，或没有user_modified_level为1或2的记录",
+                        "message": f"未找到run_id {run_id} 的version={version}数据，或没有user_modified_level为1或2的记录",
                         "total_processed": 0,
                         "updated_count": 0,
                         "results": []
@@ -1043,8 +1080,9 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
         # 调用层级分析服务
         result = update_pdf_json_hierarchy(data_list)
         
-        # 添加run_id信息到结果中
+        # 添加run_id和version信息到结果中
         result["run_id"] = run_id
+        result["version"] = version
         result["data_count"] = len(data_list)
         
         return result
