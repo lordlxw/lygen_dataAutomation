@@ -398,17 +398,17 @@ def build_prompt(instruction, input_data):
 
 你的任务是**目标文本块（即第三个）**（1）判断是哪一种新层级（2）是否存在以下四类错误，并给出对应判断和修改建议。
 根据第三文本块上下文进行层级判断：
-（1）结构新层级：第三文本块的开头是文章的结构性标题，特征如："第一章 增值税"等，是一个标题词汇；
+（1）结构新层级：第三文本块的开头是文章的结构性标题，特征如：“第一章 增值税”等，是一个标题词汇；
 （2）段落新层级：第三文本块的开头句子是正文段落内的叙述标题，特征也如：（1）、一、首先、a.等，但是一句句子；
-（3）图表新层级：文本块开头句子正文内容中特指图表的小标题，特征如：图：XXXX，下表如：，等；**注意**不是内容里有说到图或表就是图表新层级，而是特指后面文本块跟着是表或图！
-（4）附注新层级：文本块开头句子正文内容中特指附注的小标题，特征如："注：XX"等，**注意**不是内容里有提到是补充内容就是附注新层级，而是特指后面文本块跟着是附注内容！
-（5）非新层级：文本块开头句子没有明确新文本层级结构特征；
+（3）附注图表新层级：1.文本块开头句子正文内容中特指附注的小标题，特征如：“附：XX”等，2.文本块开头句子正文内容中特指图表的小标题，特征如：图：XXXX，下表如：，等；
+**注意**不是内容里有说到图或表就是附注图表新层级，而是特指后面文本块跟着是表或图！
+（4）非新层级：文本块开头句子没有明确新文本层级结构特征；
 
 错误文本内容判断：
 （1）字符错误：文本含有不合理字符，如乱码、错误符号、混杂代码符号（公式不算）；
 （2）格式错误：文本块开头是句子残段，其上半句存在于上一个文本块结尾；
 （3）信息错误：文本块为空、为页码、目录、标题页、版权页、装订信息等与正文无关的内容。
-（4）需要拆分：文本块有多个层级的文本块，在原文中加入"<mark>"将其区分。**注意**最后必须以<mark>作为结尾
+（4）需要拆分：文本块有多个层级的文本块，在原文中加入“<mark>”将其区分。**注意**最后必须以<mark>作为结尾
 
 正确文本内容判断：
 如果目标文本块不存在上述四类问题，即为正常文本块。
@@ -504,8 +504,8 @@ def build_prompt(instruction, input_data):
 """
     
     input_text = json.dumps(input_data, ensure_ascii=False, indent=2)
-    instruction_text = f"需要你回答的问题是：{instruction}"
-    input_text = f"需要分析的这段语句如下：{input_text}"
+    instruction_text = f"需要你回答的问题是：\"{instruction}\""
+    input_text = f"需要分析的这段语句是：{input_text}"
 
     # 日志追加写入，带BOM，保证Windows记事本不乱码
     log_path = "prompt_input_log.txt"
@@ -518,7 +518,7 @@ def build_prompt(instruction, input_data):
     except Exception as e:
         print(f"[日志写入失败] {e}")
 
-    prompt = f"{instruction_text}\n{input_text}\n请根据问题要求与问题进行回答。"
+    prompt = f"{instruction_text}\n{input_text}\n请根据问题要求与问题进行回答"
     
     return instruction_template, prompt
 
@@ -691,7 +691,7 @@ def process_qa_for_version_0(run_id: str) -> dict:
                 assert len(context_data) == 4, f"上下文数据长度不正确: {len(context_data)}, 应该是4个"
                 
                 # 构建instruction
-                instruction = "请问第三文本块是否为新的层级？另外，内容是否正确，如果错误应该建议如何修改?"
+                instruction = "请问第三文本块是否为新的层级？另外，内容是否正确，如果错误应该建议如何修改"
                 
                 # 添加到处理队列
                 data_to_process.append({

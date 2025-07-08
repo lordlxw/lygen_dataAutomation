@@ -942,16 +942,26 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
         
         try:
             with conn.cursor() as cur:
+                # 准备批量更新的数据
+                update_data = []
                 for result in results:
                     if result["id"] and result["level"] is not None:
-                        # 更新prompt_hierarchy和prompt_hierarchy_reason字段
-                        cur.execute("""
-                            UPDATE pdf_json 
-                            SET prompt_hierarchy = %s, prompt_hierarchy_reason = %s
-                            WHERE id = %s
-                        """, (result["level"], result["reasoning"], result["id"]))
-                        updated_count += 1
-                        print(f"更新记录 ID {result['id']}: 层级 {result['level']}")
+                        update_data.append((result["level"], result["reasoning"], result["id"]))
+                
+                if update_data:
+                    print(f"开始批量更新 {len(update_data)} 条记录...")
+                    
+                    # 使用executemany进行批量更新
+                    cur.executemany("""
+                        UPDATE pdf_json 
+                        SET prompt_hierarchy = %s, prompt_hierarchy_reason = %s
+                        WHERE id = %s
+                    """, update_data)
+                    
+                    updated_count = len(update_data)
+                    print(f"批量更新完成，共更新 {updated_count} 条记录")
+                else:
+                    print("没有需要更新的记录")
             
             conn.commit()
             
