@@ -1008,25 +1008,45 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
         
         try:
             with conn.cursor() as cur:
-                # 首先从pdf_info表获取completed_version
+                # 首先从pdf_info表获取completed_version，然后找到pdf_json表中>=completed_version的最大版本号
                 cur.execute("""
                     SELECT completed_version
                     FROM pdf_info
-                    WHERE run_id = %s
+                    WHERE run_id = %s AND completed_version IS NOT NULL
                 """, (run_id,))
                 
                 version_result = cur.fetchone()
                 if not version_result:
                     return {
                         "status": "error",
-                        "message": f"未找到run_id {run_id} 在pdf_info表中的记录",
+                        "message": f"未找到run_id {run_id} 在pdf_info表中的记录，或completed_version为空",
                         "total_processed": 0,
                         "updated_count": 0,
                         "results": []
                     }
                 
-                version = version_result[0]
-                print(f"从pdf_info表获取到version: {version}")
+                completed_version = version_result[0]
+                print(f"从pdf_info表获取到completed_version: {completed_version}")
+                
+                # 在pdf_json表中找到>=completed_version的最大版本号
+                cur.execute("""
+                    SELECT MAX(version)
+                    FROM pdf_json
+                    WHERE run_id = %s AND version >= %s
+                """, (run_id, completed_version))
+                
+                max_version_result = cur.fetchone()
+                if not max_version_result or max_version_result[0] is None:
+                    return {
+                        "status": "error",
+                        "message": f"未找到run_id {run_id} 在pdf_json表中>=completed_version({completed_version})的记录",
+                        "total_processed": 0,
+                        "updated_count": 0,
+                        "results": []
+                    }
+                
+                version = max_version_result[0]
+                print(f"找到pdf_json表中>=completed_version({completed_version})的最大版本号: {version}")
                 
                 # 使用获取到的version查询pdf_json表
                 cur.execute("""
