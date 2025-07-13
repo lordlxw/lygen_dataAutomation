@@ -12,6 +12,7 @@ import re
 import datetime
 import os
 import subprocess
+import signal
 from typing import List, Dict, Any
 from synapse_flow.db import get_pg_conn
 from vllm_service_manager import start_model_service, call_model_api
@@ -960,14 +961,69 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                 if update_data:
                     print(f"开始批量更新 {len(update_data)} 条记录...")
                     
-                    # 使用executemany进行批量更新
-                    cur.executemany("""
-                        UPDATE pdf_json 
-                        SET prompt_hierarchy = %s, prompt_hierarchy_reason = %s
-                        WHERE id = %s
-                    """, update_data)
+                    # 使用小批量更新，提高性能
+                    BATCH_SIZE = 50  # 每批50条
+                    print(f"开始小批量更新 {len(update_data)} 条记录（每批{BATCH_SIZE}条）...")
+                    updated_count = 0
+                    start_time = time.time()
                     
-                    updated_count = len(update_data)
+                    for i in range(0, len(update_data), BATCH_SIZE):
+                        batch = update_data[i:i + BATCH_SIZE]
+                        batch_start_time = time.time()
+                        
+                        try:
+                            # 批量更新
+                            cur.executemany("""
+                                UPDATE pdf_json 
+                                SET prompt_hierarchy = %s, prompt_hierarchy_reason = %s
+                                WHERE id = %s
+                            """, batch)
+                            
+                            updated_count += len(batch)
+                            batch_time = time.time() - batch_start_time
+                            
+                            # 每500条打印一次进度
+                            if updated_count % 500 == 0:
+                                elapsed_time = time.time() - start_time
+                                avg_time_per_record = elapsed_time / updated_count
+                                remaining_records = len(update_data) - updated_count
+                                estimated_remaining_time = remaining_records * avg_time_per_record
+                                
+                                print(f"进度: {updated_count}/{len(update_data)} "
+                                      f"({updated_count/len(update_data)*100:.1f}%) "
+                                      f"耗时: {elapsed_time:.2f}秒 "
+                                      f"平均每条: {avg_time_per_record:.3f}秒 "
+                                      f"预计剩余: {estimated_remaining_time:.1f}秒")
+                            
+                            # 每1000条提交一次事务
+                            if updated_count % 1000 == 0:
+                                conn.commit()
+                                print(f"已提交事务，更新了 {updated_count} 条记录")
+                                
+                        except Exception as batch_error:
+                            print(f"批量更新失败: {str(batch_error)}")
+                            # 如果批量更新失败，尝试单条更新
+                            print("尝试单条更新...")
+                            for level, reasoning, record_id in batch:
+                                try:
+                                    cur.execute("""
+                                        UPDATE pdf_json 
+                                        SET prompt_hierarchy = %s, prompt_hierarchy_reason = %s
+                                        WHERE id = %s
+                                    """, (level, reasoning, record_id))
+                                    updated_count += 1
+                                except Exception as single_error:
+                                    print(f"单条更新记录ID {record_id} 失败: {str(single_error)}")
+                                    continue
+                    
+                    # 最终提交剩余的事务
+                    if updated_count > 0:
+                        conn.commit()
+                        print(f"最终提交事务，总共更新了 {updated_count} 条记录")
+                    
+                    total_time = time.time() - start_time
+                    print(f"小批量更新完成，共更新 {updated_count} 条记录，总耗时 {total_time:.2f}秒")
+                    
                     print(f"批量更新完成，共更新 {updated_count} 条记录")
                     
                     # 验证更新结果
