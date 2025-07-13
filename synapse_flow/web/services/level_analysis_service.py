@@ -926,6 +926,10 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
     Returns:
         Dict: 更新结果
     """
+    print(f"\n=== update_pdf_json_hierarchy 函数开始 ===")
+    print(f"输入数据条数: {len(data_list)}")
+    print(f"输入数据示例: {data_list[:2] if data_list else '无数据'}")
+    
     try:
         # 初始化层级分析服务
         level_service = LevelAnalysisService()
@@ -948,6 +952,11 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                     if result["id"] and result["level"] is not None:
                         update_data.append((result["level"], result["reasoning"], result["id"]))
                 
+                print(f"\n=== 数据库更新详情 ===")
+                print(f"准备更新的数据条数: {len(update_data)}")
+                if update_data:
+                    print(f"更新数据示例: {update_data[:3] if len(update_data) > 3 else update_data}")
+                
                 if update_data:
                     print(f"开始批量更新 {len(update_data)} 条记录...")
                     
@@ -960,12 +969,26 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                     
                     updated_count = len(update_data)
                     print(f"批量更新完成，共更新 {updated_count} 条记录")
+                    
+                    # 验证更新结果
+                    print("验证更新结果...")
+                    for level, reasoning, record_id in update_data[:3]:  # 只验证前3条
+                        cur.execute("""
+                            SELECT id, prompt_hierarchy, prompt_hierarchy_reason 
+                            FROM pdf_json 
+                            WHERE id = %s
+                        """, (record_id,))
+                        verify_result = cur.fetchone()
+                        if verify_result:
+                            print(f"记录ID {record_id}: 层级={verify_result[1]}, 原因={verify_result[2]}")
+                        else:
+                            print(f"记录ID {record_id}: 未找到")
                 else:
                     print("没有需要更新的记录")
             
             conn.commit()
             
-            return {
+            result = {
                 "status": "success",
                 "message": f"成功更新 {updated_count} 条记录",
                 "total_processed": len(results),
@@ -974,6 +997,9 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                 "log_file_path": level_service.get_log_file_path(),  # 返回日志文件路径
                 "hierarchy_analysis": level_service.get_level_sequence_with_contexts()  # 新增：返回层级分析结果
             }
+            print(f"=== update_pdf_json_hierarchy 函数完成 ===")
+            print(f"返回结果: {result}")
+            return result
             
         except Exception as e:
             conn.rollback()
@@ -983,13 +1009,16 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
             
     except Exception as e:
         print(f"更新数据库时出错: {str(e)}")
-        return {
+        error_result = {
             "status": "error",
             "message": f"更新失败: {str(e)}",
             "total_processed": len(data_list),
             "updated_count": 0,
             "results": []
         }
+        print(f"=== update_pdf_json_hierarchy 函数异常结束 ===")
+        print(f"返回错误结果: {error_result}")
+        return error_result
 
 def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
     """
@@ -1069,6 +1098,7 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                     }
                 
                 print(f"找到 {len(rows)} 条需要分析的数据")
+                print(f"数据示例: {rows[:3] if rows else '无数据'}")
                 
                 # 转换为API格式
                 for row in rows:
@@ -1076,6 +1106,7 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                     
                     # 跳过text为空的记录
                     if not text or text.strip() == "":
+                        print(f"跳过空文本记录: ID={record_id}")
                         continue
                     
                     # 根据user_modified_level确定isTitleMarked
@@ -1084,6 +1115,7 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                     elif user_modified_level == 2:
                         is_title_marked = "context level"
                     else:
+                        print(f"跳过user_modified_level={user_modified_level}的记录: ID={record_id}")
                         # 跳过其他值
                         continue
                     
@@ -1094,6 +1126,7 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                     })
                 
                 print(f"准备分析 {len(data_list)} 条数据")
+                print(f"转换后的数据示例: {data_list[:2] if data_list else '无数据'}")
                 
         finally:
             conn.close()
@@ -1107,13 +1140,24 @@ def analyze_hierarchy_by_run_id(run_id: str) -> Dict[str, Any]:
                 "results": []
             }
         
+        print(f"\n=== 开始层级分析 ===")
+        print(f"run_id: {run_id}")
+        print(f"version: {version}")
+        print(f"数据条数: {len(data_list)}")
+        print(f"数据示例: {data_list[:2] if data_list else '无数据'}")
+        
         # 调用层级分析服务
+        print(f"准备调用 update_pdf_json_hierarchy 函数...")
         result = update_pdf_json_hierarchy(data_list)
+        print(f"update_pdf_json_hierarchy 函数调用完成，返回结果: {result}")
         
         # 添加run_id和version信息到结果中
         result["run_id"] = run_id
         result["version"] = version
         result["data_count"] = len(data_list)
+        
+        print(f"=== 层级分析完成 ===")
+        print(f"分析结果: {result}")
         
         return result
         
