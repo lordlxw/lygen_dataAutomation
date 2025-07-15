@@ -676,6 +676,40 @@ class LevelAnalysisService:
             print(f"推理过程: {parsed_result['reasoning']}")
             print(f"{'='*80}")
             
+            # 处理层级主题错误
+            if parsed_result['is_special_case'] and parsed_result['special_type'] == "层级主题错误":
+                print(f"\n{'='*80}")
+                print(f"=== 检测到层级主题错误，需要翻转标记类型 ===")
+                print(f"原始AI响应: {ai_response}")
+                print(f"原始标记类型: {item_data['isTitleMarked']}")
+                
+                # 翻转当前项的标记类型
+                original_is_title_marked = item_data["isTitleMarked"]
+                if original_is_title_marked == "section level":
+                    item_data["isTitleMarked"] = "context level"
+                    print(f"✅ 将标记类型从 'section level' 改为 'context level'")
+                elif original_is_title_marked == "context level":
+                    item_data["isTitleMarked"] = "section level"
+                    print(f"✅ 将标记类型从 'context level' 改为 'section level'")
+                
+                # 更新已确认层级列表中对应项的标记（如果存在）
+                if self.confirmed_levels:
+                    # 找到最后一个已确认的层级，更新其标记
+                    last_confirmed = self.confirmed_levels[-1]
+                    if last_confirmed["text"] == item_data["text"]:
+                        last_confirmed["isTitleMarked"] = item_data["isTitleMarked"]
+                        print(f"✅ 更新已确认层级列表中的标记类型")
+                
+                # 更新层级路径栈中对应项的标记（如果存在）
+                for stack_node in self.level_path_stack:
+                    if stack_node["text"] == item_data["text"]:
+                        stack_node["isTitleMarked"] = item_data["isTitleMarked"]
+                        print(f"✅ 更新层级路径栈中的标记类型")
+                        break
+                
+                print(f"标记翻转完成，当前项标记: {item_data['isTitleMarked']}")
+                print(f"{'='*80}")
+            
             # 如果成功解析到层级，更新层级路径栈、层级序列和层级上下文传递
             if parsed_result['level'] is not None:
                 current_index = len(self.level_sequence)  # 当前元素在层级序列中的索引
@@ -949,9 +983,33 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
             with conn.cursor() as cur:
                 # 准备批量更新的数据
                 update_data = []
+                user_modified_level_updates = []  # 用于更新user_modified_level的数据
                 for result in results:
                     if result["id"] and result["level"] is not None:
                         update_data.append((result["level"], result["reasoning"], result["id"]))
+                        
+                        # 处理层级主题错误的user_modified_level更新
+                        if result.get("is_special_case") and result.get("special_type") == "层级主题错误":
+                            print(f"\n=== 处理层级主题错误的user_modified_level更新 ===")
+                            print(f"记录ID: {result['id']}")
+                            print(f"修改后的isTitleMarked: {result['isTitleMarked']}")
+                            
+                            # 根据修改后的isTitleMarked确定新的user_modified_level
+                            new_user_modified_level = None
+                            if result["isTitleMarked"] == "section level":
+                                new_user_modified_level = 1  # 结构层级
+                                print(f"✅ 设置user_modified_level为1（结构层级）")
+                            elif result["isTitleMarked"] == "context level":
+                                new_user_modified_level = 2  # 段落层级
+                                print(f"✅ 设置user_modified_level为2（段落层级）")
+                            else:
+                                print(f"⚠️ 未知的isTitleMarked类型: {result['isTitleMarked']}")
+                            
+                            if new_user_modified_level is not None:
+                                user_modified_level_updates.append((new_user_modified_level, result["id"]))
+                                print(f"准备更新记录ID {result['id']} 的user_modified_level为 {new_user_modified_level}")
+                            else:
+                                print(f"❌ 无法确定user_modified_level，跳过更新")
                 
                 print(f"\n=== 数据库更新详情 ===")
                 print(f"准备更新的数据条数: {len(update_data)}")
@@ -978,6 +1036,21 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                                 SET prompt_hierarchy = %s, prompt_hierarchy_reason = %s
                                 WHERE id = %s
                             """, batch)
+                            
+                            # 批量更新user_modified_level
+                            if user_modified_level_updates:
+                                # 过滤出当前批次中需要更新的记录
+                                batch_ids = {record_id for _, _, record_id in batch}
+                                current_batch_updates = [(new_level, record_id) for new_level, record_id in user_modified_level_updates if record_id in batch_ids]
+                                
+                                if current_batch_updates:
+                                    print(f"批量更新 {len(current_batch_updates)} 条记录的user_modified_level...")
+                                    cur.executemany("""
+                                        UPDATE pdf_json 
+                                        SET user_modified_level = %s
+                                        WHERE id = %s
+                                    """, current_batch_updates)
+                                    print(f"✅ 成功批量更新 {len(current_batch_updates)} 条记录的user_modified_level")
                             
                             updated_count += len(batch)
                             batch_time = time.time() - batch_start_time
@@ -1014,6 +1087,19 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                                     updated_count += 1
                                 except Exception as single_error:
                                     print(f"单条更新记录ID {record_id} 失败: {str(single_error)}")
+                                    continue
+                            
+                            # 单条更新user_modified_level
+                            for new_level, record_id in user_modified_level_updates:
+                                try:
+                                    cur.execute("""
+                                        UPDATE pdf_json 
+                                        SET user_modified_level = %s
+                                        WHERE id = %s
+                                    """, (new_level, record_id))
+                                    print(f"✅ 单条更新记录ID {record_id} 的user_modified_level为 {new_level}")
+                                except Exception as single_error:
+                                    print(f"❌ 单条更新记录ID {record_id} 的user_modified_level失败: {str(single_error)}")
                                     continue
                     
                     # 最终提交剩余的事务
