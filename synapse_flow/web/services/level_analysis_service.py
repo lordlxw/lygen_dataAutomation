@@ -942,48 +942,7 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
         level_service.print_tree_view()
         
         # 更新数据库
-        print(f"\n=== 数据库连接诊断 ===")
         conn = get_pg_conn()
-        
-        # 检查数据库连接状态
-        try:
-            with conn.cursor() as test_cur:
-                # 测试连接
-                test_cur.execute("SELECT version()")
-                db_version = test_cur.fetchone()
-                print(f"数据库版本: {db_version[0] if db_version else '未知'}")
-                
-                # 检查当前连接数
-                test_cur.execute("SELECT count(*) FROM pg_stat_activity WHERE state = 'active'")
-                active_connections = test_cur.fetchone()
-                print(f"当前活跃连接数: {active_connections[0] if active_connections else '未知'}")
-                
-                # 检查数据库负载
-                test_cur.execute("SELECT count(*) FROM pg_stat_activity WHERE state = 'idle in transaction'")
-                idle_transactions = test_cur.fetchone()
-                print(f"空闲事务数: {idle_transactions[0] if idle_transactions else '未知'}")
-                
-                # 检查表锁
-                test_cur.execute("""
-                    SELECT locktype, mode, granted 
-                    FROM pg_locks l 
-                    JOIN pg_class c ON l.relation = c.oid 
-                    WHERE c.relname = 'pdf_json'
-                """)
-                locks = test_cur.fetchall()
-                print(f"pdf_json表锁情况: {locks}")
-                
-                # 测试单条查询性能
-                test_cur.execute("SELECT id FROM pdf_json LIMIT 1")
-                test_result = test_cur.fetchone()
-                if test_result:
-                    print(f"单条查询测试: 成功，ID={test_result[0]}")
-                else:
-                    print("单条查询测试: 失败")
-                    
-        except Exception as diag_error:
-            print(f"数据库诊断出错: {str(diag_error)}")
-        
         updated_count = 0
         
         try:
@@ -1002,33 +961,8 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                 if update_data:
                     print(f"开始批量更新 {len(update_data)} 条记录...")
                     
-                    # 测试不同批次大小的性能
-                    print(f"\n=== 批次大小性能测试 ===")
-                    
-                    # 先测试单条更新性能
-                    test_start = time.time()
-                    test_cur = conn.cursor()
-                    test_cur.execute("SELECT id FROM pdf_json LIMIT 1")
-                    test_id = test_cur.fetchone()[0]
-                    test_cur.execute("""
-                        UPDATE pdf_json 
-                        SET prompt_hierarchy = 999, prompt_hierarchy_reason = 'test'
-                        WHERE id = %s
-                    """, (test_id,))
-                    test_time = time.time() - test_start
-                    print(f"单条更新测试耗时: {test_time:.3f}秒")
-                    
-                    # 根据测试结果调整批次大小
-                    if test_time > 0.1:  # 如果单条更新超过0.1秒
-                        BATCH_SIZE = 10  # 使用更小的批次
-                        print(f"网络延迟较高，调整为每批{BATCH_SIZE}条")
-                    elif test_time > 0.05:  # 如果单条更新超过0.05秒
-                        BATCH_SIZE = 20  # 使用中等批次
-                        print(f"网络延迟中等，调整为每批{BATCH_SIZE}条")
-                    else:
-                        BATCH_SIZE = 100  # 使用较大批次
-                        print(f"网络延迟较低，使用每批{BATCH_SIZE}条")
-                    
+                    # 使用小批量更新，提高性能
+                    BATCH_SIZE = 50  # 每批50条
                     print(f"开始小批量更新 {len(update_data)} 条记录（每批{BATCH_SIZE}条）...")
                     updated_count = 0
                     start_time = time.time()
@@ -1039,17 +973,11 @@ def update_pdf_json_hierarchy(data_list: List[Dict[str, Any]]) -> Dict[str, Any]
                         
                         try:
                             # 批量更新
-                            print(f"开始更新第 {i//BATCH_SIZE + 1} 批，共 {len(batch)} 条...")
-                            batch_start = time.time()
-                            
                             cur.executemany("""
                                 UPDATE pdf_json 
                                 SET prompt_hierarchy = %s, prompt_hierarchy_reason = %s
                                 WHERE id = %s
                             """, batch)
-                            
-                            batch_time = time.time() - batch_start
-                            print(f"第 {i//BATCH_SIZE + 1} 批更新完成，耗时 {batch_time:.2f}秒，平均每条 {batch_time/len(batch):.3f}秒")
                             
                             updated_count += len(batch)
                             batch_time = time.time() - batch_start_time
