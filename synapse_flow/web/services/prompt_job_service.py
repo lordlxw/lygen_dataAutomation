@@ -408,7 +408,7 @@ def build_prompt(instruction, input_data):
 （1）字符错误：文本含有不合理字符，如乱码、错误符号、错别字、混杂代码符号（公式不算）；
 （2）格式错误：文本块开头是句子残段，其上半句存在于上一个文本块结尾；
 （3）信息错误：文本块为空、为页码、目录、标题页、版权页、装订信息等与正文无关的内容。
-（4）需要拆分：文本块有多个层级的文本块，在原文中加入"<mark>"将其区分。**注意**最后必须以<mark>作为结尾
+（4）需要拆分：文本块有多个层级的文本块，在原文中加入"<mark>"将其区分。**注意**最后必须以<summary>作为结尾
 
 正确文本内容判断：
 如果目标文本块不存在上述四类问题，即为正常文本块。
@@ -481,7 +481,7 @@ def build_prompt(instruction, input_data):
   }
 ]
 你应该回复：因为阅读上下文第三文本块为这一层级的正文组成部分，所以判断为{非新层级}。因为第三文本块因含有多个文本块，所以判断为{需要拆分}。建议处理方式为：{通过物的不流动进行国际避税，主要有两种做法：<mark>一是变更公司组织形式以改变所得性质；<mark>二是利用延期纳税方式。<mark>}
-**注意**如果后面的第四个文本块不会是新的层级，你需要在结尾标记上<mark>,从而告诉我们层级的结束位置！
+**注意**如果后面的第四个文本块不会是新的层级，你需要在结尾标记上<summary>,从而告诉我们层级的结束位置！
 
 举例情况（4）：开头非新层级且信息错误（无效内容）
     {
@@ -791,29 +791,30 @@ def process_qa_for_version_0(run_id: str) -> dict:
             # 获取目标文本块的内容
             target_text = all_results[target_index].get("adjusted_text", "").rstrip()
             
-            # 检查目标文本是否包含<mark>标记
-            if "<mark>" in target_text:
-                # 如果包含<mark>标记，将被合并的文本插入到最后一个<mark>之前
-                last_mark_pos = target_text.rfind("<mark>")
-                if last_mark_pos != -1:
-                    # 在最后一个<mark>之前插入被合并的文本
-                    merged_text = target_text[:last_mark_pos] + current_text + target_text[last_mark_pos:]
-                else:
-                    # 异常情况，直接拼接
-                    merged_text = target_text + current_text
+            # 检查目标文本是否包含<mark>或<summary>标记
+            last_mark_pos = target_text.rfind("<mark>")
+            last_summary_pos = target_text.rfind("<summary>")
+            
+            # 找到最后一个标记的位置（<mark>或<summary>，取较后的位置）
+            last_tag_pos = max(last_mark_pos, last_summary_pos)
+            
+            if last_tag_pos != -1:
+                # 如果包含标记，将被合并的文本插入到最后一个标记之前
+                merged_text = target_text[:last_tag_pos] + current_text + target_text[last_tag_pos:]
             else:
-                # 不包含<mark>标记，直接拼接
+                # 不包含标记，直接拼接
                 merged_text = target_text + current_text
             
-            # 正则清理<mark>后所有空白和换行
+            # 正则清理<mark>和<summary>后所有空白和换行
             merged_text = re.sub(r'<mark>[\s\u3000]*', '<mark>', merged_text)
+            merged_text = re.sub(r'<summary>[\s\u3000]*', '<summary>', merged_text)
             all_results[target_index]["adjusted_text"] = merged_text
             # 当前文本置空
             all_results[current_index]["adjusted_text"] = ""
             print(f"向前合并: 第{current_index}块文本合并到第{target_index}块，合并后文本: {merged_text[:100]}...")
         
-        # 第三步：处理<mark>标记后的格式清理（移除层级调整逻辑）
-        print("处理<mark>标记后的格式清理...")
+        # 第三步：处理<mark>和<summary>标记后的格式清理（移除层级调整逻辑）
+        print("处理<mark>和<summary>标记后的格式清理...")
         for i in range(len(all_results)):
             current_text = all_results[i].get("adjusted_text", "")
             
@@ -822,6 +823,12 @@ def process_qa_for_version_0(run_id: str) -> dict:
                 current_text = current_text.replace("<mark>\n", "<mark>")
                 all_results[i]["adjusted_text"] = current_text
                 print(f"第{i}块文本清理<mark>\\n格式")
+            
+            # 清理<summary>\n格式问题
+            if "<summary>\n" in current_text:
+                current_text = current_text.replace("<summary>\n", "<summary>")
+                all_results[i]["adjusted_text"] = current_text
+                print(f"第{i}块文本清理<summary>\\n格式")
         
         # 第四步：构建最终的处理数据
         processed_data = []
@@ -831,9 +838,10 @@ def process_qa_for_version_0(run_id: str) -> dict:
             adjusted_text = analysis.get("adjusted_text", "")  # 使用最终调整后的文本
             level_type = analysis.get("level_type", 0)
             
-            # 最终清理：确保所有文本都没有<mark>后空白和换行
+            # 最终清理：确保所有文本都没有<mark>和<summary>后空白和换行
             if adjusted_text:
                 adjusted_text = re.sub(r'<mark>[ \t\r\n]*', '<mark>', adjusted_text)
+                adjusted_text = re.sub(r'<summary>[ \t\r\n]*', '<summary>', adjusted_text)
             
             if ai_response:  # 有AI分析结果
                 # 构建处理后的数据项
@@ -942,6 +950,7 @@ def parse_remark_and_adjust_data(ai_response: str, current_text: str, current_in
 
         if adjusted_text:
             adjusted_text = re.sub(r'<mark>[ \t\r\n]*', '<mark>', adjusted_text)
+            adjusted_text = re.sub(r'<summary>[ \t\r\n]*', '<summary>', adjusted_text)
 
     except Exception as e:
         print(f"解析remark时出错: {str(e)}")
